@@ -1,0 +1,8 @@
+#Ignore files in backend folder
+Project-be/.venv
+Project-be/.vscode
+Project-be/__pycache__
+Project-be/.env
+
+#Ignore files in frontend folder
+Project-fe/node_modules/
