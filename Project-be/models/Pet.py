@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field
+from typing import Optional
 from datetime import datetime
 
 
@@ -8,7 +8,7 @@ class Pet(BaseModel):
     species: Optional[str] = Field(None)
     breed: Optional[str] = Field(None)
     name: str = Field(...)
-    sex: str = Field(..., regex="^(male|female)$")
+    sex: str = Field(..., pattern="^(male|female)$")
     date_of_birth: Optional[datetime] = Field(None)
 
 
@@ -17,7 +17,7 @@ class PetCreate(BaseModel):
     species: Optional[str] = Field()
     breed: Optional[str] = Field()
     name: str = Field(...)
-    sex: str = Field(..., regex="^(male|female)$")
+    sex: str = Field(..., pattern="^(male|female)$")
     date_of_birth: datetime = Field()
 
 
@@ -26,6 +26,6 @@ class PetResponse(BaseModel):
     species: Optional[str] = Field()
     breed: Optional[str] = Field()
     name: Optional[str] = Field()
-    sex: str = Field(..., regex="^(male|female)$") 
+    sex: str = Field(..., pattern="^(male|female)$") 
     date_of_birth: datetime = Field(None)
 
