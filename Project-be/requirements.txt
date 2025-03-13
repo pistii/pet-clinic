@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+motor
+pydantic
+bcrypt
+python-jose
+pymongo
+python-dotenv
+pydantic[email]
