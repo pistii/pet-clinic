@@ -1,37 +1,25 @@
-#Scheme to save to database
-
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
-from bson import ObjectId
-
-
-class Pet(BaseModel):
-    pet_id: str = Field(...)
-    species: Optional[str] = Field(None)
-    breed: Optional[str] = Field(None)
-    name: str 
-    sex: Optional[str] = None
-    date_of_birth: Optional[datetime] = None
-
+from Pet import Pet
 
 class User(BaseModel):
-    id: str = Field(...)  # MongoDB _id, stringként kezeljük
-    name: str = Field()
-    email: EmailStr = Field()
-    password: str = Field() # Titkosított jelszó bcrypt-tel
-    role: str = Field()
-    registration_date: datetime = Field()
+    id: Optional[str] = Field()  # MongoDB _id, stringként kezeljük
+    name: str = Field(...)
+    email: EmailStr = Field(...)
+    password: str = Field(...) # Titkosított jelszó bcrypt-tel
+    role: str = Field("user")
+    registration_date: datetime = Field(datetime.now())
     last_login: Optional[datetime] = Field(None)
-    is_active: bool = Field()
+    is_active: bool = Field(False)
     ##pets: List[Pet] = Field([])  # Alapértelmezett: üres lista
 
 
 # Kérésből érkező új user (password titkosítva lesz, így plaintext fogadható)
 class UserCreate(BaseModel):
-    name: str
-    email: EmailStr
-    password: str
+    name: str = Field(...)
+    email: EmailStr = Field(...)
+    password: str = Field(...)
 
 
 # Kliensnek visszaküldött user (password nélkül)
