@@ -1,44 +1,27 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Belépés és Regisztráció</title>
-</head>
-<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
-
-    <div class="container text-center">
-        <h1 class="mb-3">Üdvözlünk!</h1>
-        <p>Regisztráció nélkül is kérhetsz időpontot.</p>
-        
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card p-4 shadow">
-                    <h3 class="mb-3">Belépés</h3>
-                    <form>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email cím</label>
-                            <input type="email" class="form-control" id="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Jelszó</label>
-                            <input type="password" class="form-control" id="password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Belépés</button>
-                    </form>
-                    <hr>
-                    <p>Még nincs fiókod?</p>
-                    <button id="registerBtn" class="btn btn-success w-100">Regisztráció</button>
-                </div>
+<div class="container text-center">
+    <h1 class="mb-3">Welcome!</h1>
+    <p>To review your previous appointments it is required to register, or if you want you can request an appointment by clicking <a href="/form_fill">here</a></p>
+    
+    <div class="row justify-content-center needs-validation">
+        <div class="col-md-6">
+            <div class="card p-4 shadow">
+                <h3 class="mb-3">Login</h3>
+                <form id="form">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <button onclick="login(event)" class="btn btn-primary w-100">Login</button>
+                </form>
+                <hr>
+                <p>Don't have an account yet?</p>
+                <button id="registerBtn" onclick="window.location.replace('/register')" class="btn btn-success w-100">Register</button>
             </div>
         </div>
     </div>
-
-    <script>
-        document.getElementById("registerBtn").addEventListener("click", function() {
-            console.log("Regisztrálni szeretne.");
-        });
-    </script>
-
-</body>
-</html>
+</div>
+<script src="/src/views/login.js" type="module"></script>
