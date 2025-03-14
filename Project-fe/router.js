@@ -1,7 +1,10 @@
+
 const routes = {
     "/": "src/views/welcome.html",
     "/login": "src/views/login.html",
-    "/appointment_request": "src/views/user/create_appointment/create_appointment.html"
+    "/register": "src/views/register.html",
+    "/appointment_request": "src/views/user/create_appointment/create_appointment.html",
+    "/welcome": "src/views/welcome.html"
 };
 
 // Tartalom betöltése
@@ -9,14 +12,41 @@ const loadContent = async (path) => {
     const contentDiv = document.getElementById("app");
     if (routes[path]) {
         try {
-            const response = await fetch(routes[path]);
-            const content = await response.text();
-            contentDiv.innerHTML = content;
+            loadPage(routes[path])
         } catch (error) {
             contentDiv.innerHTML = "<p>404 Hiba történt a tartalom betöltésekor.</p>";
         }
     }
 };
+function loadPage(url) {
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('app').innerHTML = html;
+            executeScripts(); //Reload scripts
+        })
+        .catch(error => console.error('Error loading page:', error));
+}
+
+function executeScripts() {
+    document.querySelectorAll("#app script").forEach(oldScript => {
+        //Exclude files
+        if (oldScript.src && oldScript.src.includes('vite')) {
+            return;
+        }
+
+        const newScript = document.createElement("script");
+        newScript.textContent = oldScript.textContent;  // If inline script
+        if (oldScript.src) {
+            newScript.src = oldScript.src;  // External script
+            newScript.async = true;
+        }
+        console.log(newScript)
+        document.head.appendChild(newScript);
+        oldScript.remove();
+    });
+}
+
 
 // URL változás kezelése
 const navigateTo = (path) => {
