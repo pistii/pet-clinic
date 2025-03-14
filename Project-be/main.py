@@ -6,7 +6,7 @@ from fastapi import FastAPI, APIRouter
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient, errors
 from fastapi.middleware.cors import CORSMiddleware
-from user_routes.user_routes import router
+from routes.user_routes.user_routes import router
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
