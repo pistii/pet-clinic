@@ -5,8 +5,6 @@ from datetime import datetime
 from models.User import User, UserCreate
 from utils.hasher import Hasher
 
-# MongoDB kapcsolat létrehozása
-
 load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI")
@@ -30,6 +28,25 @@ class UserRepository:
             "email": user.email,
             "password": Hasher.hashPassword(user.password),
             "role": "user",
+            "registration_date": datetime.utcnow(),
+            "last_login": None,
+            "is_active": True,
+            "pets": []
+        }
+        result = users_collection.insert_one(new_user)
+        return str(result.inserted_id)
+    
+    @staticmethod
+    def get_user_by_id(user_id: str):
+        return users_collection.find_one({"user_id": user_id})
+    
+    @staticmethod
+    def create_admin(user: UserCreate):
+        new_user = {
+            "name": user.name,
+            "email": user.email,
+            "password": Hasher.hashPassword(user.password),
+            "role": "admin",
             "registration_date": datetime.utcnow(),
             "last_login": None,
             "is_active": True,
