@@ -1,0 +1,22 @@
+<style>
+   .triangle {
+    transition: transform 0.3s linear;
+}
+
+.collapse.show .triangle {
+    transform: rotate(180deg);
+}
+
+.edit-icon {
+    cursor: pointer;
+    margin-left: 5px;
+    fill: #007bff;
+}
+</style>
+
+<div class="container mt-5">
+    <div id="accordion">
+      <div id="content"></div>
+    </div>
+  </div>
+<script src="src/views/user/appointments/appointments.js" ></script>

@@ -3,8 +3,10 @@ const routes = {
     "/": "src/views/welcome.html",
     "/login": "src/views/login.html",
     "/register": "src/views/register.html",
-    "/appointment_request": "src/views/user/create_appointment/create_appointment.html",
-    "/welcome": "src/views/welcome.html"
+    "/create_appointment": "src/views/user/create_appointment/create_appointment.html",
+    "/welcome": "src/views/welcome.html",
+    "/appointments": "src/views/user/appointments/appointments.html",
+    "/details": "/src/views/details/details.html"
 };
 
 // Tartalom betöltése
