@@ -5,10 +5,10 @@ const route = window.location.pathname;
 console.log(route)
 
 const selectNavbar = () => {
-
+  console.log("role: " + user_role)
   if (user_role === "admin") adminNav();
-  if (user_role === "user") userNav();
-  if (user_role === "assistant") assistant();
+  else if (user_role === "user") userNav();
+  else if (user_role === "assistant") assistant();
   else visitorNav();
 }
 
