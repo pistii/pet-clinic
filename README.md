@@ -4,7 +4,11 @@ Create virtual environment:
 python -m venv .venv
 activate the environment:
 In DOS:
-cd .venv\Scripts -> activate
+cd .venv/Scripts -> activate
+OR: `source .venv/bin/activate`
+
+install necessary dependencies:
+pip install -r Project-be/requirements.txt
 
 run the environment:
 python -m pip install --upgrade pip
