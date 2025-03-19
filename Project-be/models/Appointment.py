@@ -1,14 +1,16 @@
 from datetime import datetime
 from typing import Optional
-from Pet import Pet
-from User import UserResponse
-from pydantic import BaseModel, Field
+import uuid
+
+from bson import ObjectId
+from models.Pet import Pet
+from models.User import UserResponse
+from pydantic import BaseModel, Field, field_validator
 
 #Key factor: Without pet, the user cannot request an appointment
 
 #When user fills out the medical form
 class RequestAppointment(BaseModel):
-    appointment_id: str = Field(...)
     pet_id: str = Field(...)
     description: str = Field(..., max_length=500)
 
@@ -16,7 +18,6 @@ class RequestAppointment(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "appointment_id": "ef6b7edb-2073-412f-8de9-f2c6df858556",
                     "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
                     "description": "Fluffy is sick"
                 }
@@ -27,9 +28,8 @@ class RequestAppointment(BaseModel):
 
 #When appointment saved into database
 class Appointment(BaseModel):
-    appointment_id: Optional[str] = Field()
     pet_id: str = Field(...)
-    user_id: str = Field(...)
+    user_id: ObjectId = Field()
     time_of_request: datetime = Field(datetime.now())
     time_of_appointment: datetime = Field(None)
     diagnosis: Optional[str] = Field(None, max_length=500)
@@ -38,13 +38,24 @@ class Appointment(BaseModel):
     modified_by: Optional[str] = Field(None)
     last_modification: Optional[datetime] = Field(None)
     
+    #This validator converts every time the db objectId to string
+    @field_validator("user_id")
+    def validate_object_id(cls, v):
+        if isinstance(v, str):
+            return ObjectId(v)
+        if isinstance(v, ObjectId):
+            return v
+        raise ValueError("Invalid ObjectId")
+
+        
     model_config = {
+        "arbitrary_types_allowed":"true",
         "json_schema_extra": {
             "examples": [
                 {
                     "appointment_id": "ef6b7edb-2073-412f-8de9-f2c6df858556",
                     "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
-                    "user_id": "67cc433449264ff52c2793f4",
+                    "user_id": "ObjectId('67cc433449264ff52c2793f4')",
                     "time_of_request": "2025-03-08T13:17:08.249+00:00",
                     "time_of_appointment": "2025-03-08T13:17:08.249+00:00",
                     "diagnosis": "null",
@@ -56,7 +67,36 @@ class Appointment(BaseModel):
             ]
         }
     }
-        
+
+
+
+#When assistant confirms appointment
+class AppointmentUpdate(BaseModel):
+    id: str = Field(...)
+    pet_id: str = Field(...)
+    user_id: str = Field(...)
+    time_of_appointment: datetime = Field(None)
+    diagnosis: Optional[str] = Field(None, max_length=500)
+    description: str = Field(..., max_length=500)
+    status: Optional[str] = Field("Waiting for confirmation.")
+    
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "appointment_id": "ef6b7edb-2073-412f-8de9-f2c6df858556",
+                    "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
+                    "user_id": "67cc433449264ff52c2793f4",
+                    "time_of_appointment": "2025-03-08T13:17:08.249+00:00",
+                    "diagnosis": "null",
+                    "description": "Fluffy is sick",
+                    "status": "Waiting for confirmation.",
+                }
+            ]
+        }
+    }
+
+
 #When USER request the appointments. This is the response model
 class UserAppointmentResponse(BaseModel):
     appointment_id: str = Field(...)
@@ -107,3 +147,7 @@ class AssistantAppointmentResponse(UserAppointmentResponse):
             ]
         }
     }
+
+class AppointmentRequest(BaseModel):
+    startDate: str
+    endDate: str
