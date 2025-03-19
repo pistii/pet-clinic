@@ -25,8 +25,8 @@ REFRESH_TOKEN_EXPIRE_MINUTES = int(os.getenv("REFRESH_TOKEN_EXPIRE_MINUTES"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 #src: https://dev.to/hirushafernando/fastapi-role-base-access-control-with-jwt-4jan
-def authenticate_user(email: str, password: str):
-    user = UserRepository.get_user_by_email(email)
+async def authenticate_user(email: str, password: str):
+    user = await UserRepository.get_user_by_email(email)
     if not user:
         return False
     if not Hasher.passwordMatch(password, user.password):
@@ -58,7 +58,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = UserRepository.get_user_by_email(email)
+    user = await UserRepository.get_user_by_email(email)
     if user is None:
         raise credentials_exception
     return user
