@@ -1,18 +1,21 @@
-
 import os
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient, errors
-from fastapi.middleware.cors import CORSMiddleware
-from routes.user_routes.user_routes import router
+
+from routes import user_routes
+from routes import appointment_routes
+
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
-
+#print(f"mongo: {MONGO_URI}")
 app = FastAPI()
-user_router = router
+user_router = user_routes.router
+appointment_router = appointment_routes.router
 
 client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
 
@@ -33,3 +36,4 @@ app.add_middleware(
 
 
 app.include_router(user_router)
+app.include_router(appointment_router)
