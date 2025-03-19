@@ -4,7 +4,7 @@ from datetime import datetime
 from models.Pet import Pet
 
 class User(BaseModel):
-    id: Optional[str] = Field(None)  # MongoDB _id, stringként kezeljük
+    id: str = Field(..., alias="_id")  # MongoDB _id, stringként kezeljük
     name: str = Field(...)
     email: EmailStr = Field(...)
     password: str = Field(...) # Titkosított jelszó bcrypt-tel
