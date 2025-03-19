@@ -1,56 +1,59 @@
 import os
 from dotenv import load_dotenv
-from pymongo import MongoClient
 from datetime import datetime
+from motor.motor_asyncio import AsyncIOMotorClient
+
 from models.User import User, UserCreate
 from utils.hasher import Hasher
 
-load_dotenv()
 
+load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
-client = MongoClient(MONGO_URI)
-db = client["pet_clinic"]
-users_collection = db["users"]
+client_motor = AsyncIOMotorClient(MONGO_URI)
+db = client_motor.get_database("pet_clinic")
+users_collection = db.get_collection("users")
+
 
 class UserRepository:
     @staticmethod
-    def get_user_by_email(email: str):
-        user_data = users_collection.find_one({"email": email})
+    async def get_user_by_email(email: str):
+        user_data = await users_collection.find_one({"email": email})
         if user_data:
+            user_data["_id"] = str(user_data["_id"])
             return User(**user_data)
         return None
 
     @staticmethod
-    def create_user(user: UserCreate):
+    async def create_user(user: UserCreate, role: str = "user"):
         new_user = {
             "name": user.name,
             "email": user.email,
             "password": Hasher.hashPassword(user.password),
-            "role": "user",
-            "registration_date": datetime.utcnow(),
+            "role": role,
+            "registration_date": datetime.now(datetime.timezone.utc),
             "last_login": None,
             "is_active": True,
             "pets": []
         }
-        result = users_collection.insert_one(new_user)
+        result = await users_collection.insert_one(new_user)
         return str(result.inserted_id)
     
     @staticmethod
-    def get_user_by_id(user_id: str):
-        return users_collection.find_one({"user_id": user_id})
+    async def get_user_by_id(user_id: str):
+        return await users_collection.find_one({"user_id": user_id})
     
     @staticmethod
-    def create_admin(user: UserCreate):
+    async def create_admin(user: UserCreate):
         new_user = {
             "name": user.name,
             "email": user.email,
             "password": Hasher.hashPassword(user.password),
             "role": "admin",
-            "registration_date": datetime.utcnow(),
+            "registration_date": datetime.now(datetime.timezone.utc),
             "last_login": None,
             "is_active": True,
             "pets": []
         }
-        result = users_collection.insert_one(new_user)
+        result = await users_collection.insert_one(new_user)
         return str(result.inserted_id)
