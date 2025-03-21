@@ -3,11 +3,39 @@ from typing import Optional
 import uuid
 
 from bson import ObjectId
-from models.Pet import Pet
-from models.User import UserResponse
+from models.Pet import Pet, PetCreate
+from models.User import UnregisteredUserForm, UserResponse
 from pydantic import BaseModel, Field, field_validator
 
 #Key factor: Without pet, the user cannot request an appointment
+
+
+class RequestAnonimAppointment(BaseModel):
+    user: UnregisteredUserForm
+    pet: PetCreate
+    description: str
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "user": {
+                        "email": "test@pet_clinic.com",
+                        "name": "Gipsz Jakab"
+                    },
+                    "pet": {
+                        "species": "Dog",
+                        "breed": "Border Collie",
+                        "name": "Fluffy",
+                        "sex": "female",
+                        "date_of_birth": "2023-08-04"
+                    },
+                    "description": "Fluffy is weak, barely ate yesterday night"
+                }
+            ]
+        }
+    }
+
 
 #When user fills out the medical form
 class RequestAppointment(BaseModel):
@@ -35,6 +63,7 @@ class Appointment(BaseModel):
     diagnosis: Optional[str] = Field(None, max_length=500)
     description: str = Field(..., max_length=500)
     status: Optional[str] = Field("Pending...")
+    user_is_registered = bool = Field(...)
     modified_by: Optional[str] = Field(None)
     last_modification: Optional[datetime] = Field(None)
     
@@ -61,6 +90,7 @@ class Appointment(BaseModel):
                     "diagnosis": "null",
                     "description": "Fluffy is sick",
                     "status": "Pending...",
+                    "user_is_registered": "true",
                     "modified_by": "null",
                     "last_modification": "null",
                 }

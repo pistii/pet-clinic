@@ -20,21 +20,30 @@ appointment_collection = db_motor.get_collection("appointment")
 
 class AppointmentRepository:
     @staticmethod
-    async def get_by_id(id: str):
+    async def get_by_id(id: str) -> Appointment:
         try:
             result = await appointment_collection.find_one({"id": id})
             return result
         except pymongo.errors.PyMongoError:
             print(f"Appointment not found: {result}")
     
+    @staticmethod
+    async def get_by_pet_id(id: str) -> AppointmentUpdate:
+        try:
+            result = await appointment_collection.find_one({"pet_id": id})
+            return result
+        except pymongo.errors.PyMongoError:
+            print(f"Error while trying to receive appointment by pet id: {result}")
+    
 
     @staticmethod
     async def create_appointment(user: User, appointment: RequestAppointment):
-
+        print(f"user in create: {user}")
         new_appointment = Appointment(
-            description=appointment.description, 
+            description=appointment.description,
+            user_is_registered=user.is_active, 
             pet_id=str(appointment.pet_id),
-            user_id=ObjectId(user.id)
+            user_id=ObjectId(user["_id"])
         )
         appointment_dict = new_appointment.model_dump()
         
@@ -95,4 +104,3 @@ class AppointmentRepository:
     async def update_appointment(appointment: AppointmentUpdate):
         result = await appointment_collection.find_one_and_update({"_id": str(appointment.id)}, appointment)
         return result
-    
