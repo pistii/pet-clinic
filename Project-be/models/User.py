@@ -24,7 +24,7 @@ class UserCreate(BaseModel):
 
 # Kliensnek visszaküldött user (password nélkül)
 class UserResponse(BaseModel):
-    id: Optional[str] = Field(None)
+    # id: Optional[str] = Field(None)
     name: str = Field(...)
     email: EmailStr = Field(...)
     role: Optional[str] = Field("user")
@@ -32,3 +32,10 @@ class UserResponse(BaseModel):
     last_login: Optional[datetime] = Field(None)
     is_active: bool = Field(True)
     pets: List[Pet] = Field([])
+
+
+class UnregisteredUserForm(BaseModel):
+    name: str = Field(...)
+    email: EmailStr = Field(...)
+    role: Optional[str] = Field("anonim")
+    is_active: bool = Field(False)

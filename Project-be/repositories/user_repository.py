@@ -1,9 +1,14 @@
+import json
 import os
+from typing import Union
+from bson import ObjectId
 from dotenv import load_dotenv
 from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from models.User import User, UserCreate
+from models.User import User, UserCreate, UserResponse
+from models.Appointment import RequestAnonimAppointment
+
 from utils.hasher import Hasher
 
 
@@ -19,13 +24,16 @@ class UserRepository:
     @staticmethod
     async def get_user_by_email(email: str):
         user_data = await users_collection.find_one({"email": email})
-        if user_data:
+        if user_data and user_data["is_active"]:
             user_data["_id"] = str(user_data["_id"])
             return User(**user_data)
+        elif user_data: #dict type
+            return user_data
         return None
 
     @staticmethod
     async def create_user(user: UserCreate, role: str = "user"):
+        
         new_user = {
             "name": user.name,
             "email": user.email,
@@ -40,8 +48,25 @@ class UserRepository:
         return str(result.inserted_id)
     
     @staticmethod
+    async def create_anonim_user(appointment: RequestAnonimAppointment) -> User:
+        user = appointment.user
+        new_user = {
+            "name": user.name,
+            "email": user.email,
+            "role": "anonim",
+            "is_active": False,
+            "pets": []
+        }
+        new_user["pets"].append(appointment.pet.model_dump())
+        #new_user = user.model_dump()
+        result = await users_collection.insert_one(new_user)
+        new_user["_id"] = result.inserted_id
+
+        return new_user
+    
+    @staticmethod
     async def get_user_by_id(user_id: str):
-        return await users_collection.find_one({"user_id": user_id})
+        return await users_collection.find_one({"_id": ObjectId(user_id)})
     
     @staticmethod
     async def create_admin(user: UserCreate):
