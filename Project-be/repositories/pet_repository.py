@@ -1,4 +1,5 @@
 import os
+from typing import Union
 from dotenv import load_dotenv
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -16,12 +17,16 @@ users_collection = db_motor.get_collection("users")
 
 class PetRepository:
     @staticmethod
-    async def insert_pet(user: User, pet: Pet) -> Pet:
+    async def insert_pet(user: Union[User, dict], pet: Pet) -> Pet:
+        #user can be dict or User obj
         try:
+            user_email = user.email if isinstance(user, User) else user["email"]
+            
             added = await users_collection.update_one(
-                {"email": user.email},
+                {"email": user_email},
                 {"$push": {"pets": pet.model_dump()}}
             )
+
             if (added.modified_count == 1):
                 return pet
         except pymongo.errors.WriteError as e:

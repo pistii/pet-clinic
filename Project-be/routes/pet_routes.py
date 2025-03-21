@@ -1,20 +1,12 @@
-from typing import Annotated
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
 
-from models.User import User, UserResponse, UserCreate
-from models.Appointment import RequestAppointment
-from models.token import Token
-from models.Pet import Pet, PetCreate
+from auth.auth import get_current_user
 
-from repositories.token import add_refresh_token, update_refresh_token
-from repositories.user_repository import UserRepository
-from repositories.appointment_repository import AppointmentRepository
+from models.User import User
+from models.Pet import PetCreate
+
 from repositories.pet_repository import PetRepository
-
-from auth.auth import authenticate_user, create_token_pair, get_current_user, validate_refresh_token
-from auth.RoleChecker import RoleChecker
 
 
 router = APIRouter(prefix="/api/pets", tags=["Pet"])
