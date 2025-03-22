@@ -1,5 +1,6 @@
-const user_role = localStorage.getItem("role");
-const user_name = localStorage.getItem("name");
+const userdata = JSON.parse(localStorage.getItem("user_details"));
+const user_role = userdata ? userdata.role : null;
+const user_name = userdata ? userdata.name : null;
 const route = window.location.pathname;
 
 console.log(route)
@@ -41,7 +42,7 @@ const assistant = () => {
         <span class="nav-link text-light">Welcome, ${user_name}</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link ${route == "/" ? 'active' : ""}" href="/appointments">Today</a>
+        <a class="nav-link ${route == "/" ? 'active' : ""}" href="/today">Today</a>
       </li>
       <li class="nav-item">
         <a class="nav-link ${route == "/appointments" ? 'active' : ""}" href="/appointments">Appointments</a>
@@ -87,8 +88,8 @@ const visitorNav = () => {
       <li class="nav-item ${route == "/login" ? 'active' : ""}">
       <a class="nav-link" href="/login">Login</a>
       </li>
-      <li class="nav-item ${route == "/appointment_request" ? 'active' : ""}">
-      <a class="nav-link" href="/appointment_request">Appointment requzest</a>
+      <li class="nav-item ${route == "/create_appointment" ? 'active' : ""}">
+      <a class="nav-link" href="/create_appointment">Appointment requzest</a>
       </li>
   </ul>
   `
