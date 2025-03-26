@@ -11,6 +11,10 @@ from repositories.pet_repository import PetRepository
 
 router = APIRouter(prefix="/api/pets", tags=["Pet"])
 
+@router.get("/getAll")
+async def get_all(user: User = Depends(get_current_user)):
+    pets = await PetRepository.get_all_by_email(user.email)
+    return pets
 
 @router.post("/add/")
 async def add_pet(pet: PetCreate,

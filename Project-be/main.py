@@ -8,7 +8,7 @@ from pymongo import MongoClient, errors
 
 from routes import user_routes
 from routes import appointment_routes
-
+from routes import pet_routes
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
@@ -16,6 +16,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 app = FastAPI()
 user_router = user_routes.router
 appointment_router = appointment_routes.router
+pet_router = pet_routes.router
 
 client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
 
@@ -37,3 +38,4 @@ app.add_middleware(
 
 app.include_router(user_router)
 app.include_router(appointment_router)
+app.include_router(pet_router)

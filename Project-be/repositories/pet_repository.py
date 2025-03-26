@@ -17,6 +17,19 @@ users_collection = db_motor.get_collection("users")
 
 class PetRepository:
     @staticmethod
+    async def get_all_by_email(email: str):
+        try:
+            user = await users_collection.find_one({"email": email})
+            return user["pets"]
+        except pymongo.errors.CursorNotFound:
+            return "User not found"
+        except pymongo.errors.NetworkTimeout:
+            return "Request timed out"
+        except Exception as e:
+            print(f"Error while requesting user: {e}")
+
+
+    @staticmethod
     async def insert_pet(user: Union[User, dict], pet: Pet) -> Pet:
         #user can be dict or User obj
         try:
