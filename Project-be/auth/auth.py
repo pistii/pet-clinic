@@ -1,12 +1,14 @@
 import os
 from dotenv import load_dotenv
 
-from typing import Annotated
+from typing import Annotated, Optional
 from passlib.context import CryptContext # type: ignore
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from fastapi import Security
+
 from pydantic import ValidationError 
 from jose import JWTError, jwt
 
@@ -14,6 +16,7 @@ from utils.hasher import Hasher
 from models import User
 from repositories.user_repository import UserRepository
 from repositories.token import get_refresh_token
+
 
 load_dotenv()
 
@@ -23,6 +26,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_MINUTES = int(os.getenv("REFRESH_TOKEN_EXPIRE_MINUTES"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
 
 #src: https://dev.to/hirushafernando/fastapi-role-base-access-control-with-jwt-4jan
 async def authenticate_user(email: str, password: str):
@@ -70,6 +76,12 @@ async def current_user_is_active(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+
+async def get_optional_user(token: Optional[str] = Security(oauth2_scheme_optional)) -> Optional[User]:
+    if not token:
+        return None  # Nincs token, anonim felhasználó
+    
+    return await get_current_user(token)
 
 async def validate_refresh_token(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")

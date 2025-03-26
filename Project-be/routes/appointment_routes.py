@@ -1,25 +1,35 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Optional, Union
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Body, Depends, HTTPException
 
 from auth.RoleChecker import RoleChecker
-from auth.auth import get_current_user
+from auth.auth import get_current_user, get_optional_user
 
 from repositories.appointment_repository import AppointmentRepository
-from repositories.user_repository import UserRepository
-from repositories.pet_repository import PetRepository
 
-from models.Appointment import AppointmentRequest, AppointmentUpdate, RequestAnonimAppointment, RequestAppointment
+from models.Appointment import AppointmentRequest, AppointmentUpdate, RequestAnonimAppointment, RequestNewAppointment
 from models.User import User
 
+from utils.converter import convert_document
+
 router = APIRouter(prefix="/api/appointment", tags=["appointment"]) 
+
+@router.get("/get/pending")
+async def get_pending_appointments(_: Annotated[bool, Depends(RoleChecker(required_role=["assistant", "admin"]))]):
+    result = await AppointmentRepository.get_pending_appointments()
+    
+    if not result:
+        return JSONResponse(content="Appointment not found", status_code=404)
+
+    json_data = [convert_document(doc) for doc in result]
+    return JSONResponse(content=json_data, status_code=200)
 
 
 #Returns appointments in the specified date interval
 @router.post("/assistant")
 async def receive_assistant_appointments(appointment: AppointmentRequest, 
-                                         _ : Annotated[bool, Depends(RoleChecker(required_role=["assistant", "admin"]))]
+                                        _ : Annotated[bool, Depends(RoleChecker(required_role=["assistant", "admin"]))]
                                         ):
     date_format = '%Y-%m-%d'
     start_date = datetime.strptime(appointment.startDate, date_format)
@@ -61,35 +71,14 @@ async def update_appointment(
     raise HTTPException("Error while updating appointment.", status_code=400)
 
 
-
-#Default endpoint for unregistered visitors
-@router.post("/create/unregistered")
-async def create_appointment(appointment: RequestAnonimAppointment = Body(...)):
-    user = await UserRepository.get_user_by_email(appointment.user.email)
-    if isinstance(user, User): #User exist with this email
-        raise HTTPException(status_code=400, detail="This email is used. Please log in and continue the appointment request in your account.")
-    elif isinstance(user, dict): #User requested appointment before, insert the pet in the user pet array
-        user["pets"].append(appointment.pet)
-        await PetRepository.insert_pet(user, appointment.pet)
-    else:
-        user = await UserRepository.create_anonim_user(appointment)
-        
-    appointment_request = RequestAppointment(
-        pet_id=appointment.pet.pet_id, 
-        description=appointment.description)
-    created = await AppointmentRepository.create_appointment(user, appointment_request)
-    if created is not None:
-        return JSONResponse(status_code=201, content="Appointment created.")
-
-
-#Default endpoint for registered users
 @router.post("/create")
-async def create_appointment(appointment: RequestAppointment,
-                             user: User = Depends(get_current_user)):
-    is_exist = await AppointmentRepository.get_by_pet_id(appointment.pet_id)
-    if is_exist:
-        raise HTTPException(status_code=400, detail="There is a pending appointment for this pet. Please contact with your doctor.")
-
-    created = await AppointmentRepository.create_appointment(user, appointment)
-    if created is not None:
-        return JSONResponse(status_code=201, content="Appointment created.")
+async def create_appointment(
+    appointment: Union[RequestNewAppointment, RequestAnonimAppointment],
+    user: Optional[User] = Depends(get_optional_user)):
+        if user is None:
+            #If not logged in, we will treat it as an anonymous appointment request.
+            appointments = await AppointmentRepository.handle_unregistered_appointment(appointment)
+            return appointments    
+        # If logged in, we request a normal appointment request.
+        appointments = await AppointmentRepository.handle_registered_appointment(user, appointment)
+        return appointments

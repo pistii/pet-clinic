@@ -25,12 +25,36 @@ class RequestAnonimAppointment(BaseModel):
                     },
                     "pet": {
                         "species": "Dog",
+                        "breed": "Golden Retriever",
+                        "name": "Fluffy",
+                        "sex": "female",
+                        "date_of_birth": "2023-08-04"
+                    },
+                    "description": "Fluffy is feeling weak, barely ate yesterday night"
+                }
+            ]
+        }
+    }
+
+
+#When user fills out the medical form
+class RequestNewAppointment(BaseModel):
+    pet: PetCreate
+    description: str = Field(..., max_length=500)
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "pet": {
+                        "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
+                        "species": "Dog",
                         "breed": "Border Collie",
                         "name": "Fluffy",
                         "sex": "female",
                         "date_of_birth": "2023-08-04"
                     },
-                    "description": "Fluffy is weak, barely ate yesterday night"
+                    "description": "Fluffy yesterday night haven't ate. She's sleeping since then."
                 }
             ]
         }
@@ -47,7 +71,7 @@ class RequestAppointment(BaseModel):
             "examples": [
                 {
                     "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
-                    "description": "Fluffy is sick"
+                    "description": "My pet is not feeling well, barely ate."
                 }
             ]
         }
@@ -63,7 +87,7 @@ class Appointment(BaseModel):
     diagnosis: Optional[str] = Field(None, max_length=500)
     description: str = Field(..., max_length=500)
     status: Optional[str] = Field("Pending...")
-    user_is_registered = bool = Field(...)
+    user_is_registered: bool = Field(...)
     modified_by: Optional[str] = Field(None)
     last_modification: Optional[datetime] = Field(None)
     
@@ -85,10 +109,10 @@ class Appointment(BaseModel):
                     "appointment_id": "ef6b7edb-2073-412f-8de9-f2c6df858556",
                     "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
                     "user_id": "ObjectId('67cc433449264ff52c2793f4')",
-                    "time_of_request": "2025-03-08T13:17:08.249+00:00",
-                    "time_of_appointment": "2025-03-08T13:17:08.249+00:00",
+                    "time_of_request": "2025-03-10T13:17:08.249+00:00",
+                    "time_of_appointment": "2025-03-13T13:17:08.249+00:00",
                     "diagnosis": "null",
-                    "description": "Fluffy is sick",
+                    "description": "Fluffy is not feeling well.",
                     "status": "Pending...",
                     "user_is_registered": "true",
                     "modified_by": "null",
@@ -117,7 +141,7 @@ class AppointmentUpdate(BaseModel):
                     "appointment_id": "ef6b7edb-2073-412f-8de9-f2c6df858556",
                     "pet_id": "1c9b9b2f-3cb7-4c53-81a8-26436a71a7ab",
                     "user_id": "67cc433449264ff52c2793f4",
-                    "time_of_appointment": "2025-03-08T13:17:08.249+00:00",
+                    "time_of_appointment": "2025-03-14T13:17:08.249+00:00",
                     "diagnosis": "null",
                     "description": "Fluffy is sick",
                     "status": "Waiting for confirmation.",

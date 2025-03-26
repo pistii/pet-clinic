@@ -9,7 +9,7 @@ class Pet(BaseModel):
     species: Optional[str] = Field(None)
     breed: Optional[str] = Field(None)
     name: str = Field(...)
-    sex: str = Field(..., pattern="^(male|female)$")
+    sex: Optional[str] = Field(None, pattern="^(male|female)$")
     date_of_birth: Optional[datetime] = Field(None)
 
 
@@ -18,7 +18,7 @@ class PetCreate(BaseModel):
     species: Optional[str] = Field(None)
     breed: Optional[str] = Field(None)
     name: str = Field(...)
-    sex: str = Field(..., pattern="^(male|female)$")
+    sex: Optional[str] = Field(None, pattern="^(male|female)$")
     date_of_birth: Optional[datetime] = Field(None)
 
 

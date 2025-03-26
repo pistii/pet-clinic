@@ -3,13 +3,16 @@ import os
 from bson import ObjectId
 from dotenv import load_dotenv
 
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 import pymongo.errors
-from models.User import User, UserCreate
+from models.User import UnregisteredUserForm, User
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from models.Appointment import AppointmentUpdate, RequestAppointment, Appointment
+from models.Appointment import AppointmentUpdate, RequestAnonimAppointment, RequestAppointment, Appointment, RequestNewAppointment
 from utils.converter import convert_object_ids
-
+from repositories.user_repository import UserRepository
+from repositories.pet_repository import PetRepository
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
@@ -37,13 +40,23 @@ class AppointmentRepository:
     
 
     @staticmethod
-    async def create_appointment(user: User, appointment: RequestAppointment):
-        print(f"user in create: {user}")
+    async def get_pending_appointments():
+        try:
+            cursor = appointment_collection.find({"time_of_appointment": None})
+            result = await cursor.to_list()
+            return result
+        except pymongo.errors.OperationFailure as e:
+            print(f"Error: Failed to receive appointments: {e.message}")
+            return []
+
+
+    @staticmethod
+    async def create_appointment(user: User, appointment: RequestNewAppointment):
         new_appointment = Appointment(
             description=appointment.description,
             user_is_registered=user.is_active, 
-            pet_id=str(appointment.pet_id),
-            user_id=ObjectId(user["_id"])
+            pet_id=str(appointment.pet.pet_id),
+            user_id=ObjectId(user.id)
         )
         appointment_dict = new_appointment.model_dump()
         
@@ -53,6 +66,63 @@ class AppointmentRepository:
             print(f"Cannot insert element: {e._message}")
         return inserted
     
+    @staticmethod
+    async def create_anonim_appointment(user: UnregisteredUserForm, appointment: RequestNewAppointment):
+        print(user)
+        new_appointment = Appointment(
+            description=appointment.description,
+            user_is_registered=user.is_active, 
+            pet_id=str(appointment.pet.pet_id),
+            user_id=ObjectId(user.id)
+        )
+        appointment_dict = new_appointment.model_dump()
+        
+        try:
+            inserted = await appointment_collection.insert_one(appointment_dict)
+            return inserted
+
+        except pymongo.errors.OperationFailure as e:
+            print(f"Cannot insert element: {e._message}")
+    
+    
+
+    async def handle_registered_appointment(user: User, appointment: RequestNewAppointment):
+        """
+        Handles the appointment requests for registered users.
+        """
+        if await AppointmentRepository.get_by_pet_id(appointment.pet.pet_id):
+            raise HTTPException(status_code=400, detail="The pet already has a pending appointment.")
+
+        await PetRepository.insert_pet(user, appointment.pet)
+        created = await AppointmentRepository.create_appointment(user, appointment)
+        
+        if created:
+            #TODO: Send email about the successful appointment request.
+            return JSONResponse(status_code=201, content="Appointment created.")
+
+
+    async def handle_unregistered_appointment(appointment: RequestAnonimAppointment):
+        """
+        Handles the appointment requests for anonim users
+        """
+        existing_user = await UserRepository.get_user_by_email(appointment.user.email)
+
+        if isinstance(existing_user, User):
+            raise HTTPException(status_code=400, detail="This email is already in use. Please log in!")
+        
+        if isinstance(existing_user, dict):  # Korábban már kért időpontot
+            await PetRepository.insert_pet(existing_user, appointment.pet)
+            existing_user["pets"].append(appointment.pet)
+            return JSONResponse(status_code=201, content="Pet added.")
+        
+        else:  # Új anonim felhasználó
+            user_obj = await UserRepository.create_anonim_user(appointment)
+
+            created = await AppointmentRepository.create_anonim_appointment(user_obj, appointment)
+            if created:
+                return JSONResponse(status_code=201, content="Appointment created.")
+
+
     @staticmethod
     async def get_assistant_appointments(start: datetime, end: datetime):
         

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from models.User import User, UserCreate, UserResponse
+from models.User import UnregisteredUserForm, User, UserCreate, UserResponse
 from models.Appointment import RequestAnonimAppointment
 
 from utils.hasher import Hasher
@@ -39,7 +39,7 @@ class UserRepository:
             "email": user.email,
             "password": Hasher.hashPassword(user.password),
             "role": role,
-            "registration_date": datetime.now(datetime.timezone.utc),
+            "registration_date": datetime.now(),
             "last_login": None,
             "is_active": True,
             "pets": []
@@ -50,6 +50,7 @@ class UserRepository:
     @staticmethod
     async def create_anonim_user(appointment: RequestAnonimAppointment) -> User:
         user = appointment.user
+        #Initialize user object then insert the pet into the array.
         new_user = {
             "name": user.name,
             "email": user.email,
@@ -58,11 +59,10 @@ class UserRepository:
             "pets": []
         }
         new_user["pets"].append(appointment.pet.model_dump())
-        #new_user = user.model_dump()
+        
         result = await users_collection.insert_one(new_user)
-        new_user["_id"] = result.inserted_id
 
-        return new_user
+        return UserResponse(**new_user, id=str(result.inserted_id))
     
     @staticmethod
     async def get_user_by_id(user_id: str):

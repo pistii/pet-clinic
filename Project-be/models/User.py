@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
-from models.Pet import Pet
+from models.Pet import Pet, PetCreate
 
 class User(BaseModel):
     id: str = Field(..., alias="_id")  # MongoDB _id, stringként kezeljük
@@ -24,7 +24,7 @@ class UserCreate(BaseModel):
 
 # Kliensnek visszaküldött user (password nélkül)
 class UserResponse(BaseModel):
-    # id: Optional[str] = Field(None)
+    id: Optional[str] = Field(None)
     name: str = Field(...)
     email: EmailStr = Field(...)
     role: Optional[str] = Field("user")
@@ -39,3 +39,4 @@ class UnregisteredUserForm(BaseModel):
     email: EmailStr = Field(...)
     role: Optional[str] = Field("anonim")
     is_active: bool = Field(False)
+    pets: List[PetCreate] = Field([])
