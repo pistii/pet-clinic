@@ -11,9 +11,19 @@ from repositories.appointment_repository import AppointmentRepository
 from models.Appointment import AppointmentRequest, AppointmentUpdate, RequestAnonimAppointment, RequestNewAppointment
 from models.User import User
 
-from utils.converter import convert_document
+from utils.converter import convert_document, convert_object_ids
 
 router = APIRouter(prefix="/api/appointment", tags=["appointment"]) 
+
+@router.get("/getAll")
+async def get_user_appointments(user: Annotated[User, Depends(get_current_user)]):
+    appointments = await AppointmentRepository.get_user_appointments(user)
+
+    json_list = await appointments.to_list()
+    if len(json_list) > 0:
+        convert_json = [convert_document(item) for item in json_list]
+        return JSONResponse(content=convert_json, status_code=200)
+    return JSONResponse(content=[], status_code=404)
 
 @router.get("/get/pending")
 async def get_pending_appointments(_: Annotated[bool, Depends(RoleChecker(required_role=["assistant", "admin"]))]):

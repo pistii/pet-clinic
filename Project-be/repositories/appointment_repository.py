@@ -122,6 +122,10 @@ class AppointmentRepository:
             if created:
                 return JSONResponse(status_code=201, content="Appointment created.")
 
+    @staticmethod
+    async def get_user_appointments(user: User):
+        user_appointments = appointment_collection.find({"user_id": ObjectId(user.id)})
+        return user_appointments
 
     @staticmethod
     async def get_assistant_appointments(start: datetime, end: datetime):
