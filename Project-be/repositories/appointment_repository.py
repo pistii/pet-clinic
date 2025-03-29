@@ -124,8 +124,48 @@ class AppointmentRepository:
 
     @staticmethod
     async def get_user_appointments(user: User):
-        user_appointments = appointment_collection.find({"user_id": ObjectId(user.id)})
-        return user_appointments
+        cursor_result = appointment_collection.aggregate([
+        {
+            "$match": {#szürés user id alapján
+                "user_id": ObjectId(user.id)
+            },
+        },
+
+        {
+            "$lookup": {  # Join-like művelet
+                "from": "users",  # A másik collection neve
+                "localField": "user_id",  # Az appointment-ben lévő mező
+                "foreignField": "_id",  # A users collection-ben az id
+                "as": "owner"  # Ide kerül a csatolt user adatai
+            }
+        },
+        {
+            "$unwind": "$owner"  # kibontjuk az egyetlen user objektumot
+        },
+        {
+            "$set": {
+                "owner.pets": {
+                    "$filter": {
+                        "input": "$owner.pets",  # a pets lista
+                        "as": "pet",
+                        "cond": {"$eq": ["$$pet.pet_id", "$pet_id"]}  # csak a megfelelő pet_id maradjon
+                    }
+                }
+            }
+        },
+        {
+            "$set": {
+                "pet": {"$arrayElemAt": ["$owner.pets", 0]}  # az egyetlen megtalált pet
+            }
+        },
+        {
+            "$unset": ["owner", "user_id", "appointment_id", "pet_id", "user_info.password"]
+        }
+        ])
+
+        res = await cursor_result.to_list()
+        res = convert_object_ids(res)
+        return res
 
     @staticmethod
     async def get_assistant_appointments(start: datetime, end: datetime):
