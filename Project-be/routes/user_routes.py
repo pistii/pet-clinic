@@ -28,6 +28,20 @@ async def create_user(user: UserCreate):
 
     return UserResponse(id=user_id, **user_dict)
 
+#Registers assistant if email is not used
+@router.post("/register/assistant", response_model=UserResponse)
+async def create_user(_ : Annotated[bool, Depends(RoleChecker(required_role=["admin"]))],
+                      user: UserCreate):
+    existing_user = await UserRepository.get_user_by_email(user.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user_id = await UserRepository.create_user(user, role="assistant")
+    user_dict = user.model_dump(exclude="password")
+
+    return UserResponse(id=user_id, **user_dict)
+
+
 #For development
 @router.post("/register_admin")
 async def create_admin(user: UserCreate):
