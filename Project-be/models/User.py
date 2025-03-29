@@ -21,6 +21,13 @@ class UserCreate(BaseModel):
     email: EmailStr = Field(...)
     password: str = Field(...)
 
+# A módosítandó user model
+class UpdateUser(BaseModel):
+    id: str = Field(...)
+    name: Optional[str] = Field()
+    email: Optional[EmailStr] = Field()
+    password: Optional[str] = Field(default=None)
+
 
 # Kliensnek visszaküldött user (password nélkül)
 class UserResponse(BaseModel):
