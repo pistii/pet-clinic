@@ -9,16 +9,14 @@ async function loginBtnPress(event) {
 
     
     //Sends a login request to the server
-    let resp = await login(email, password);
+    let isSuccess = await login(email, password);
     
-    if (resp === null) {
-        document.getElementById("informField").innerHTML = `<span class="text-danger">Failed to login. Please try again later</span>`
-        return;
+    if(isSuccess) {
+        //get the user details with the access token
+        let token = localStorage.getItem("access_token") 
+        await getUserData(token);
+        window.location.href = '/appointments';
     }
-
-    //get the user details with the access token
-    await getUserData(resp.access_token);
-    window.location.href = '/appointments';
 }
 
 async function login(email, password) {
@@ -33,16 +31,25 @@ async function login(email, password) {
             body: formdata
         });
         json_resp = await response.json();
+
+        if (response.ok && json_resp) {
+            localStorage.setItem("access_token", json_resp.access_token);
+            localStorage.setItem("refresh_token", json_resp.refresh_token);
+            return true;
+        }
+        else if (!response.ok) {
+            if (json_resp.detail == "Incorrect username or password") {
+                document.getElementById("informField").innerHTML = `<span class="text-danger">Incorrect email or password.</span>`
+            }
+            else {
+                document.getElementById("informField").innerHTML = `<span class="text-danger">Failed to login.</span>`
+            }
+            return false;
+        }
     }
     catch (error) {
         console.error("Faield to login " + error)
     }
-
-    if (json_resp !== null) {
-        localStorage.setItem("access_token", json_resp.access_token);
-        localStorage.setItem("refresh_token", json_resp.refresh_token);
-    }    
-    return json_resp;
 } 
 
 async function getUserData(access_token) {
