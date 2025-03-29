@@ -4,13 +4,14 @@ from typing import Union
 from bson import ObjectId
 from dotenv import load_dotenv
 from datetime import datetime
+from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from models.User import UnregisteredUserForm, User, UserCreate, UserResponse
+from models.User import UnregisteredUserForm, UpdateUser, User, UserCreate, UserResponse
 from models.Appointment import RequestAnonimAppointment
 
 from utils.hasher import Hasher
-
+from utils.converter import convert_document
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
@@ -66,7 +67,8 @@ class UserRepository:
     
     @staticmethod
     async def get_user_by_id(user_id: str):
-        return await users_collection.find_one({"_id": ObjectId(user_id)})
+        user = await users_collection.find_one({"_id": ObjectId(user_id)})
+        return user
     
     @staticmethod
     async def create_admin(user: UserCreate):
@@ -82,3 +84,43 @@ class UserRepository:
         }
         result = await users_collection.insert_one(new_user)
         return str(result.inserted_id)
+    
+
+    # Returns true if any data were modified. 
+    # None if no changes happened. 
+    # False if exception happened or any field is either invalid, or not allowed to use
+    @staticmethod
+    async def update_user(user: UpdateUser):
+        original_data = await UserRepository.get_user_by_id(user.id)
+        dict_original = json.loads(json.dumps((convert_document(original_data))))
+        
+        user_model = {
+            key: value for key, value in user.model_dump(by_alias=True).items() if value is not None
+        }
+        updated_fields = {
+            key: value for key, value in user_model.items() if key in dict_original and dict_original[key] != value
+        }
+
+        if not updated_fields:
+            return None
+
+        if updated_fields.get("email") is not None:
+            email_is_used = await UserRepository.get_user_by_email(user.email)
+            if isinstance(email_is_used, User):
+                raise HTTPException(status_code=400, detail="Email is in use")
+        
+        # Update data in db
+        try:
+            if updated_fields.get("password") and len(updated_fields.get("password")) > 7:
+                updated_fields["password"] = Hasher.hashPassword(updated_fields.get("password"))
+
+            result = await users_collection.update_one({"_id": ObjectId(user.id)}, {"$set": updated_fields})
+            if result.modified_count:
+                print("Felhasználói adatok frissítve:", updated_fields)
+                return True
+            else:
+                print("Nem történt módosítás az adatbázisban.")
+                return None
+        except Exception as e:
+            print("Hiba az adatfrissítés során:", e)
+            return False
