@@ -92,3 +92,20 @@ async def create_appointment(
         # If logged in, we request a normal appointment request.
         appointments = await AppointmentRepository.handle_registered_appointment(user, appointment)
         return appointments
+
+
+@router.delete("/delete/{appointment_id}")
+async def delete_appointment(appointment_id: str,
+                             user: User = Depends(get_current_user)):
+    user_appointments = await AppointmentRepository.get_user_appointments(user)
+
+    if len(user_appointments) == 0:
+        return None
+    
+    #Szűrés az időpontra ha van létező adat akkor visszaadja, különben None értéket kap.
+    appointment_found = next((x for x in user_appointments if str(x["_id"]) == appointment_id), None)
+    if appointment_found is None:
+        raise HTTPException(status_code=404, detail="Appointment not found.")
+    
+    await AppointmentRepository.delete_appointment(appointment_id=appointment_id)
+    return JSONResponse(status_code=200, content="Appointment deleted.")

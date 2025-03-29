@@ -178,3 +178,18 @@ class AppointmentRepository:
     async def update_appointment(appointment: AppointmentUpdate):
         result = await appointment_collection.find_one_and_update({"_id": str(appointment.id)}, appointment)
         return result
+
+
+    @staticmethod
+    async def delete_appointment(appointment_id: str):
+        try:
+            result = await appointment_collection.delete_one({"_id": ObjectId(appointment_id)})
+            if result.deleted_count == 1:
+                return JSONResponse(status_code=200, content="Appointment deleted.")
+
+        except pymongo.errors.ServerSelectionTimeoutError:
+            raise HTTPException(status_code=400, detail="Request timed out, please try again.")
+        except pymongo.errors.PyMongoError:
+            raise HTTPException(status_code=400, detail="Failed to remove appointment.")
+        raise HTTPException(status_code=400, detail="Failed to remove appointment.")
+    
