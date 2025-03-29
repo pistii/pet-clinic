@@ -17,6 +17,7 @@
     "@fullcalendar/list": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
     "bootstrap": "^5.3.3",
+    "jquery": "^3.7.1",
     "vite": "^6.2.1"
   }
 }
