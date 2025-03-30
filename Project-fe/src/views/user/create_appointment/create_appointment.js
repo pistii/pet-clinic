@@ -5,7 +5,7 @@ const user_details = JSON.parse(localStorage.getItem("user_details"))
 const current_role = user_details ? user_details.role : null;
 let user_pets = [];
 
-async function init() {
+(async function init() {
     if (current_role) { //Ha be van jelentkezve, lekérjük a kisállatokat...
         await fetchData().then(
             () => {
@@ -19,7 +19,8 @@ async function init() {
                     })
                 } 
                 else {
-                    initializeSelectForm(); //The pet selector
+                    fillRegisteredUserAppointmentForm();
+                    setWatchers();
                 }
             }
         );   
@@ -28,9 +29,8 @@ async function init() {
         fillExtendedAppointmentForm(); //Display form with name and email
         setWatchers();
     }
-}
+})()
 
-init();
 
 
 /////////Start of Server communication
@@ -165,14 +165,11 @@ function initializeSelectForm() {
     watchPetChange();
 
     }
-    else { //Ne is inicializálja ha nincs pet, hanem egyből megjelenítjük a formot...
-        fillRegisteredUserAppointmentForm();
-    }
-
 }
 
 /////////Setters
 function setWatchers() {    
+    console.log("setwatcher")
     document.getElementById("submit").addEventListener("click", validateForm);
 }
 
