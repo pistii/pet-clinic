@@ -9,10 +9,12 @@ from models.token import Token
 
 from repositories.token import add_refresh_token, update_refresh_token
 from repositories.user_repository import UserRepository
+from repositories.appointment_repository import AppointmentRepository
 
 from auth.auth import authenticate_user, create_token, create_token_pair, get_current_user, validate_refresh_token
 from auth.RoleChecker import RoleChecker
 
+from utils.converter import convert_object_ids
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
@@ -117,3 +119,33 @@ async def update_user_data(user_model: UpdateUser,
             raise HTTPException(status_code=400, detail="No changes.")
 
     raise HTTPException(status_code=403)
+
+@router.delete('/delete/{id}')
+async def delete_user(id: str, 
+                      user: User = Depends(get_current_user)):
+    
+    user_to_remove = await UserRepository.get_user_by_id(id)
+    if user_to_remove is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user_obj = User(**convert_object_ids(user_to_remove))
+
+    if str(user_to_remove["_id"]) == id or user.role == "admin":    
+        user_appointment = await AppointmentRepository.get_user_appointments(user_obj)
+        
+        user_has_pending_appointment = [x for x in user_appointment if "pending" in x["status"].lower()]
+        print(user_has_pending_appointment)
+
+        if (len(user_has_pending_appointment) > 0):
+            raise HTTPException(status_code=400, detail="User cannot be deleted. User has pending appointment")
+        
+        is_success = await UserRepository.delete_user(id)
+        #TODO: Remove also user appointments
+        if is_success:
+            deleted_appointments = await AppointmentRepository.delete_all_user_appointment(id)
+            print(f" with user also deleted {deleted_appointments} appointment")
+            return JSONResponse(status_code=200, content="User deleted")
+        else:
+            raise HTTPException(status_code=400, detail="Failed to delete user.")
+    
+    raise HTTPException(status_code=403, detail="Forbidden")

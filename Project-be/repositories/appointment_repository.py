@@ -221,6 +221,12 @@ class AppointmentRepository:
 
 
     @staticmethod
+    async def delete_all_user_appointment(user_id: str):
+        result = await appointment_collection.delete_many({'user_id': ObjectId(user_id)})
+        return result.deleted_count
+    
+    
+    @staticmethod
     async def delete_appointment(appointment_id: str):
         try:
             result = await appointment_collection.delete_one({"_id": ObjectId(appointment_id)})

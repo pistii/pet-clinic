@@ -124,3 +124,10 @@ class UserRepository:
         except Exception as e:
             print("Hiba az adatfrissítés során:", e)
             return False
+
+    @staticmethod
+    async def delete_user(user_id: str):
+        result = await users_collection.delete_one({'_id': ObjectId(user_id)})
+        if result.deleted_count == 1:
+            return True
+        return False
