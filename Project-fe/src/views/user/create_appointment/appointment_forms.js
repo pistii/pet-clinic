@@ -141,3 +141,17 @@ export const fillExtendedAppointmentForm = () => {
       </form>`
 }
 
+export const selectPetOrfillFormView = () => {
+    document.getElementById("content").innerHTML = 
+    `
+    <div class="py-2">
+        <select id="petSelector" class="form-select" aria-label="Select pet">
+            <option selected>Select pet...</option>
+        </select>
+    </div>
+    <div  class="d-flex justify-content-center py-2">OR</div>
+    <div  class="d-flex justify-content-center py-2">
+        <button class="btn btn-primary" type="submit" id="fillOutForm" >Fill out form</button>
+    </div>
+    `
+}

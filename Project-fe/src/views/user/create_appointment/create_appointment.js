@@ -1,4 +1,4 @@
-import { fillExtendedAppointmentForm, fillRegisteredUserAppointmentForm } from "./appointment_forms";
+import { fillExtendedAppointmentForm, fillRegisteredUserAppointmentForm, selectPetOrfillFormView } from "./appointment_forms";
 
 
 const user_details = JSON.parse(localStorage.getItem("user_details"))
@@ -7,12 +7,22 @@ let user_pets = [];
 
 async function init() {
     if (current_role) { //Ha be van jelentkezve, lekérjük a kisállatokat...
-        await fetchData();
-        initializeSelectForm(); //The pet selector
-        document.getElementById("fillOutForm").addEventListener("click", () => {
-            fillRegisteredUserAppointmentForm();
-            setWatchers();
-        })
+        await fetchData().then(
+            () => {
+                if (user_pets.length > 0) {
+                    selectPetOrfillFormView();
+                    initializeSelectForm(); //The pet selector
+
+                    document.getElementById("fillOutForm").addEventListener("click", () => {
+                        fillRegisteredUserAppointmentForm();
+                        setWatchers();
+                    })
+                } 
+                else {
+                    initializeSelectForm(); //The pet selector
+                }
+            }
+        );   
     }
     else { //If visitor, display the form instantly and set watcher for the submit.
         fillExtendedAppointmentForm(); //Display form with name and email
