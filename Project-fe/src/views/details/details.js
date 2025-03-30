@@ -18,7 +18,9 @@ function parseUserDetailsInForm() {
 //////////// Setters
 function setWatcher() {
     document.getElementById("submit").addEventListener("click", (event) => validate(event))
+    document.getElementById("delete-btn").addEventListener("click", deleteUser)
 }
+
 //////////// End of Setters
 
 
@@ -71,6 +73,37 @@ async function update() {
         console.log("updated");
     }
     return response;
+
+}
+
+async function deleteUser() {
+    let token = localStorage.getItem("access_token");
+    let user_id = initial_data.id;
+    
+    let response = await fetch(`${SERVER_URL}/api/users/delete/${user_id}`, {
+        method: 'DELETE',
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    if (response){
+        let json_resp = await response.json();
+        if (response.status == 400 || response.status == 404) {
+            if (json_resp.detail) {
+                document.getElementById("informField").innerHTML = `<span class="text-danger">${json_resp.detail}</span>`
+            }
+            else {
+                document.getElementById("informField").innerHTML = `<span class="text-danger">Failed to delete.</span>`
+            }
+        }
+        if (response.status == 200) {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    }
+    console.log(response.ok)
 
 }
 //////////// End of Server communication
