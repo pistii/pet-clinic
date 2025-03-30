@@ -1,5 +1,5 @@
 import { fillExtendedAppointmentForm, fillRegisteredUserAppointmentForm, selectPetOrfillFormView } from "./appointment_forms";
-
+import { formatDate } from '../../../helpers/helper'
 
 const user_details = JSON.parse(localStorage.getItem("user_details"))
 const current_role = user_details ? user_details.role : null;
@@ -139,18 +139,12 @@ function initializeSelectForm() {
             let pet_id = selectedPet.value;
             let pet = user_pets.find(p => p.pet_id == pet_id);
             
-            let pet_date = new Date(pet.date_of_birth);
-            let dd = String(pet_date.getDate()).padStart(2, '0');
-            let mm = String(pet_date.getMonth() + 1).padStart(2, '0');
-            let yyyy = pet_date.getFullYear();
-            let date_format =  yyyy + '-' + mm + '-' + dd;
-
             fillRegisteredUserAppointmentForm();
             setWatchers(); //Set watcher for the submit press
 
             //Feltölti a formot a létező pet értékeivel
             let form = document.getElementById("appointmentForm");
-            setFormValues(form);
+            setFormValues(form, pet);
             
             //Beállítjük az inputokat hogy ne legyen módosítható
             form.petname.disabled = true;
@@ -173,7 +167,13 @@ function setWatchers() {
     document.getElementById("submit").addEventListener("click", validateForm);
 }
 
-function setFormValues(form) {
+function setFormValues(form, pet) {
+    let pet_date = new Date(pet.date_of_birth);
+    let dd = String(pet_date.getDate()).padStart(2, '0');
+    let mm = String(pet_date.getMonth() + 1).padStart(2, '0');
+    let yyyy = pet_date.getFullYear();
+    let date_format =  yyyy + '-' + mm + '-' + dd;
+
     form.petname.value = pet.name;
     form.dob.value = date_format;
     form.species.value = pet.species;
