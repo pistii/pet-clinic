@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
+from models.helpers.queryparams import QueryParams
 from models.User import UpdateUser, User, UserResponse, UserCreate
 from models.token import Token
 
@@ -55,6 +56,14 @@ async def create_admin(user: UserCreate):
     user_dict = user.model_dump(exclude="password")
 
     return UserResponse(id=user_id, **user_dict)
+
+
+
+@router.post("/getAll")
+async def get_all_user(queryParams: QueryParams, 
+                       _ : Annotated[bool, Depends(RoleChecker(required_role=["admin"]))]):
+    users = await UserRepository.get_all_user_paginated(queryParams)
+    return users
 
 
 #Receives the user with the given id

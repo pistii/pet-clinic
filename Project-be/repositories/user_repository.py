@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from models.User import UnregisteredUserForm, UpdateUser, User, UserCreate, UserResponse
 from models.Appointment import RequestAnonimAppointment
+from models.helpers.queryparams import QueryParams
 
 from utils.hasher import Hasher
 from utils.converter import convert_document
@@ -22,6 +23,19 @@ users_collection = db.get_collection("users")
 
 
 class UserRepository:
+    @staticmethod
+    async def get_all_user_paginated(queryParams: QueryParams):
+        query = {
+            "$or": [
+                {"email": {"$regex": queryParams.search, "$options": "i"}},
+                {"name": {"$regex": queryParams.search, "$options": "i"}},
+            ]
+        }
+        users = await users_collection.find(query).limit(queryParams.limit).skip(queryParams.offset).to_list()
+        converted = convert_document(users)
+        return converted
+
+
     @staticmethod
     async def get_user_by_email(email: str):
         user_data = await users_collection.find_one({"email": email})
