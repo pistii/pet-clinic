@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from typing import Union
 from bson import ObjectId
@@ -31,9 +32,12 @@ class UserRepository:
                 {"name": {"$regex": queryParams.search, "$options": "i"}},
             ]
         }
+        total_document = await users_collection.count_documents(query)
+        total_pages = math.ceil(total_document/queryParams.limit)
+
         users = await users_collection.find(query).limit(queryParams.limit).skip(queryParams.offset).to_list()
         converted = convert_document(users)
-        return converted
+        return converted, total_pages
 
 
     @staticmethod

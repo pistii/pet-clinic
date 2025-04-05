@@ -62,8 +62,8 @@ async def create_admin(user: UserCreate):
 @router.post("/getAll")
 async def get_all_user(queryParams: QueryParams, 
                        _ : Annotated[bool, Depends(RoleChecker(required_role=["admin"]))]):
-    users = await UserRepository.get_all_user_paginated(queryParams)
-    return users
+    users, total = await UserRepository.get_all_user_paginated(queryParams)
+    return JSONResponse(content={"users": users, "totalPages": total}, status_code=200)
 
 
 #Receives the user with the given id
