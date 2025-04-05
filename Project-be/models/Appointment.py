@@ -83,7 +83,7 @@ class Appointment(BaseModel):
     pet_id: str = Field(...)
     user_id: ObjectId = Field()
     time_of_request: datetime = Field(datetime.now())
-    time_of_appointment: datetime = Field(None)
+    time_of_appointment: Optional[datetime] = Field(None)
     diagnosis: Optional[str] = Field(None, max_length=500)
     description: str = Field(..., max_length=500)
     status: Optional[str] = Field("Pending...")
@@ -124,12 +124,34 @@ class Appointment(BaseModel):
 
 
 
+#Update user appointment
+class AssistantConfirmsAppointmentUpdate(BaseModel):
+    id: str = Field(...)
+    time_of_appointment: Optional[datetime] = Field(None)
+    diagnosis: Optional[str] = Field(None, max_length=500)
+    status: Optional[str] = Field("Waiting for confirmation.")
+    
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "id": "ef6b7edb-2073-412f-8de9-f2c6df858556",
+                    "time_of_appointment": "2025-03-14T13:17:08.249+00:00",
+                    "diagnosis": "null",
+                    "status": "Waiting for confirmation.",
+                }
+            ]
+        }
+    }
+
+
+
 #When assistant confirms appointment
 class AppointmentUpdate(BaseModel):
     id: str = Field(...)
-    pet_id: str = Field(...)
-    user_id: str = Field(...)
-    time_of_appointment: datetime = Field(None)
+    pet_id: str = Field()
+    user_id: Optional[str] = Field(None)
+    time_of_appointment: Optional[datetime] = Field(None)
     diagnosis: Optional[str] = Field(None, max_length=500)
     description: str = Field(..., max_length=500)
     status: Optional[str] = Field("Waiting for confirmation.")
@@ -205,3 +227,4 @@ class AssistantAppointmentResponse(UserAppointmentResponse):
 class AppointmentRequest(BaseModel):
     startDate: str
     endDate: str
+    includePending: bool = False

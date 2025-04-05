@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import os
 from bson import ObjectId
 from dotenv import load_dotenv
@@ -9,8 +10,8 @@ import pymongo.errors
 from models.User import UnregisteredUserForm, User
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from models.Appointment import AppointmentUpdate, RequestAnonimAppointment, RequestAppointment, Appointment, RequestNewAppointment
-from utils.converter import convert_object_ids
+from models.Appointment import AppointmentUpdate, AssistantConfirmsAppointmentUpdate, RequestAnonimAppointment, RequestAppointment, Appointment, RequestNewAppointment
+from utils.converter import convert_document, convert_object_ids
 from repositories.user_repository import UserRepository
 from repositories.pet_repository import PetRepository
 
@@ -25,8 +26,9 @@ class AppointmentRepository:
     @staticmethod
     async def get_by_id(id: str) -> Appointment:
         try:
-            result = await appointment_collection.find_one({"id": id})
-            return result
+            result = await appointment_collection.find_one({"_id": ObjectId(id)})
+            if result:
+                return Appointment(**result)
         except pymongo.errors.PyMongoError:
             print(f"Appointment not found: {result}")
     
@@ -42,7 +44,41 @@ class AppointmentRepository:
     @staticmethod
     async def get_pending_appointments():
         try:
-            cursor = appointment_collection.find({"time_of_appointment": None})
+            cursor = appointment_collection.aggregate([
+                {
+                    "$match": {"time_of_appointment": None},
+                },
+                {
+                    "$lookup": {
+                        "from": "users",  # A másik collection neve
+                        "localField": "user_id",  # Az appointment-ben lévő mező
+                        "foreignField": "_id",  # A users collection-ben az id
+                        "as": "owner"  # Ide kerül a csatolt user adatai
+                    }
+                },
+                {
+                    "$unwind": "$owner"  # kibontjuk az egyetlen user objektumot
+                },
+                {
+                    "$set": {
+                        "owner.pets": {
+                            "$filter": {
+                                "input": "$owner.pets",  # a pets lista
+                                "as": "pet",
+                                "cond": {"$eq": ["$$pet.pet_id", "$pet_id"]}  # csak a megfelelő pet_id maradjon
+                            }
+                        }
+                    }
+                },
+                {
+                    "$set": {"pet": {"$arrayElemAt": ["$owner.pets", 0]}}  # az egyetlen megtalált pet
+                },
+                {
+                    "$unset": ["user_id", "pet_id", "owner.registration_date", "owner.last_login"
+                        "owner.role", "owner.is_active", "owner.pets", "owner.password"]
+                }
+            ])
+
             result = await cursor.to_list()
             return result
         except pymongo.errors.OperationFailure as e:
@@ -181,17 +217,17 @@ class AppointmentRepository:
                 "from": "users",  # A másik collection neve
                 "localField": "user_id",  # Az appointment-ben lévő mező
                 "foreignField": "_id",  # A users collection-ben az id
-                "as": "user_info"  # Ide kerül a csatolt user adatai
+                "as": "owner"  # Ide kerül a csatolt user adatai
             }
         },
         {
-            "$unwind": "$user_info"  # iibontjuk az egyetlen user objektumot
+            "$unwind": "$owner"  # iibontjuk az egyetlen user objektumot
         },
         {
             "$set": {
-                "user_info.pets": {
+                "owner.pets": {
                     "$filter": {
-                        "input": "$user_info.pets",  # a pets lista
+                        "input": "$owner.pets",  # a pets lista
                         "as": "pet",
                         "cond": {"$eq": ["$$pet.pet_id", "$pet_id"]}  # csak a megfelelő pet_id maradjon
                     }
@@ -200,11 +236,12 @@ class AppointmentRepository:
         },
         {
             "$set": {
-                "user_info.pet": {"$arrayElemAt": ["$user_info.pets", 0]}  # az egyetlen megtalált pet
+                "owner.pet": {"$arrayElemAt": ["$owner.pets", 0]}  # az egyetlen megtalált pet
             }
         },
         {
-            "$unset": ["user_info.pets", "_id", "user_id", "appointment_id", "pet_id", "user_info.password"]
+            "$unset": ["user.role", "user_is_registered", "modified_by", "last_modification", "owner.pets", 
+                       "user_id", "appointment_id", "pet_id", "owner.password"]
         }
         ])
         
@@ -214,10 +251,35 @@ class AppointmentRepository:
         return res
 
 
+
     @staticmethod
-    async def update_appointment(appointment: AppointmentUpdate):
-        result = await appointment_collection.find_one_and_update({"_id": str(appointment.id)}, appointment)
-        return result
+    async def update_appointment(appointment: AssistantConfirmsAppointmentUpdate):
+        print("appointment in update:")
+        print(appointment)
+
+        
+        converted = convert_object_ids(appointment)
+
+        # Csak a nem None értékeket tartalmazó dictionary
+        update_data = converted.model_dump(exclude_none=True)
+        if appointment.time_of_appointment == None: #Visszaállítjuk null-ra
+           update_data["time_of_appointment"] = None 
+        update_data.pop("id", None)
+
+        
+        print(update_data)  # Debugginghez, hogy lássuk, mit frissít
+        
+        if not update_data:
+            return None  # Ha nincs mit updatelni, akkor nem csinálunk semmit
+
+        result = await appointment_collection.update_one(
+            {"_id": ObjectId(appointment.id)},  # Keresési feltétel
+            {"$set": update_data},  # Csak a ténylegesen megadott mezőket frissíti
+        )
+        if result.modified_count == 1:
+            return True
+        return False
+
 
 
     @staticmethod
