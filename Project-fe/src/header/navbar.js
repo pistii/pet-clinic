@@ -42,7 +42,7 @@ const assistant = () => {
         <span class="nav-link text-light">Welcome, ${user_name}</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link ${route == "/" ? 'active' : ""}" href="/today">Today</a>
+        <a class="nav-link ${route == "/pending" ? 'active' : ""}" href="/pending">Give Appointment</a>
       </li>
       <li class="nav-item">
         <a class="nav-link ${route == "/appointments" ? 'active' : ""}" href="/appointments">Appointments</a>
