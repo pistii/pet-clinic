@@ -33,3 +33,13 @@ export function bindFormData(formId, data) {
         }
     });
 }
+
+//Reusable card to display messages.
+export function messageCard(message, subtitle) {
+    return `
+    <div class="card text-center">
+        <div class='text-danger card-title'>${message}</div>
+        <div class="card-text">${subtitle}</div>
+    </div>  
+    `
+}
