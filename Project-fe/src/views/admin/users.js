@@ -24,11 +24,11 @@ fetchData();
 
 async function filter(event) {
   event.preventDefault();
-  let search = document.getElementById("searchByField").value;
-  let limitField = document.getElementById("limitField").value;
-  let offsetField = document.getElementById("offsetField").value;
-  console.log(search, limitField, offsetField)
-
+  query.search = document.getElementById("searchByField").value;
+  query.limit = document.getElementById("limitField").value;
+  query.page = 1;
+  query.offset = 0;
+  
   await fetchData();
 }
 

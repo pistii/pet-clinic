@@ -143,11 +143,12 @@ export function renderPagination(query) {
           </li>`;
       }
       
-    paginationHTML += `
-    <li class="page-item hover ${index === totalPages ? 'active' : ''}"">
-      <a class="page-link prevent-select" data-page="${totalPages}">${totalPages}</a>
-    </li>`;
-  
+    if (totalPages > 1) {
+      paginationHTML += `
+      <li class="page-item hover ${index === totalPages ? 'active' : ''}"">
+        <a class="page-link prevent-select" data-page="${totalPages}">${totalPages}</a>
+      </li>`;
+    }
   
     paginationHTML += `
     <li class="page-item hover ${index === totalPages ? 'disabled' : ''}">
