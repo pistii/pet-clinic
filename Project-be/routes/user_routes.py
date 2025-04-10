@@ -96,7 +96,6 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 @router.post("/refresh")  
 async def refresh_access_token(token_data: Annotated[tuple[User, str], Depends(validate_refresh_token)]):  
     user, token = token_data  
-    
     access_token, refresh_token = create_token_pair(user)
     update_refresh_token(refresh_token, token)
 

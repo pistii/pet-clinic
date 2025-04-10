@@ -86,8 +86,10 @@ async def get_optional_user(token: Optional[str] = Security(oauth2_scheme_option
 async def validate_refresh_token(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
     try:
-        if get_refresh_token(token) is not None:
+        token_exist = await get_refresh_token(token)
+        if token_exist is not None:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            
             email: str = payload.get("email")
             role: str = payload.get("role")
             if email is None or role is None:
@@ -97,9 +99,7 @@ async def validate_refresh_token(token: Annotated[str, Depends(oauth2_scheme)]):
 
     except (JWTError, ValidationError):
         raise credentials_exception
-
-    user = UserRepository.get_user_by_email(email)
-
+    user = await UserRepository.get_user_by_email(email)
     if user is None:
         raise credentials_exception
 
@@ -107,8 +107,8 @@ async def validate_refresh_token(token: Annotated[str, Depends(oauth2_scheme)]):
 
 def create_token_pair(user: User):
     
-    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_MINUTES) #TODO: the expire time should be minutes, not days. This is only for development
-    refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expires = timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
 
     access_token = create_token(data={"email": user.email, "role": user.role}, expires_delta=access_token_expires)
     refresh_token = create_token(data={"email": user.email, "role": user.role}, expires_delta=refresh_token_expires)

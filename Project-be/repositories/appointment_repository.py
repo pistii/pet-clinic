@@ -15,6 +15,8 @@ from utils.converter import convert_document, convert_object_ids
 from repositories.user_repository import UserRepository
 from repositories.pet_repository import PetRepository
 
+from services.email import EmailSendingService
+
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
@@ -146,6 +148,7 @@ class AppointmentRepository:
         if isinstance(existing_user, User):
             raise HTTPException(status_code=400, detail="This email is already in use. Please log in!")
         
+        EmailSendingService.sendNewAppointment(appointment.user.email)
         if isinstance(existing_user, dict):  # Korábban már kért időpontot
             await PetRepository.insert_pet(existing_user, appointment.pet)
             existing_user["pets"].append(appointment.pet)
@@ -254,7 +257,7 @@ class AppointmentRepository:
 
     @staticmethod
     async def update_appointment(appointment_id: str, appointment: AssistantConfirmsAppointmentUpdate):
-        converted = convert_object_ids(appointment)
+        converted = convert_document(appointment)
 
         # Csak a nem None értékeket tartalmazó dictionary
         update_data = converted.model_dump(exclude_none=True)

@@ -15,6 +15,7 @@ from models.Appointment import Appointment, AppointmentRequest, AppointmentUpdat
 from models.User import User
 
 from utils.converter import convert_document
+from services.email import EmailSendingService
 
 router = APIRouter(prefix="/api/appointment", tags=["appointment"]) 
 
@@ -68,8 +69,8 @@ async def update_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     if not existing_appointment.user_is_registered:
-        #TODO send email to user if anonim
-        print("user is not registered, should send email...")
+        user = await UserRepository.get_user_by_id(appointment_dict["user_id"])
+        EmailSendingService.appointmentUpdated(user["email"], appointment.time_of_appointment)
 
     try:
         is_updated = await AppointmentRepository.update_appointment(appointment_dict["_id"], appointment)
@@ -97,7 +98,8 @@ async def update_appointment(
         existing_appointment.status = "Appointment received."
         existing_appointment.time_of_appointment = appointment.time_of_appointment
         if not existing_appointment.user_is_registered:
-            #TODO send email to user if anonim
+            user_requested_appointment = await UserRepository.get_user_by_id(existing_appointment.user_id)
+            EmailSendingService.appointmentUpdated(user_requested_appointment["email"], existing_appointment.time_of_appointment)
             print("user is not registered, should send email...")
 
     elif user.role == "user": #User módosította az időpontot
