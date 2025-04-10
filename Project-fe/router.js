@@ -8,9 +8,8 @@ const routes = {
     "/welcome": "src/views/welcome.html",
     "/appointments": user_role == "user" 
     ? "src/views/user/appointments/appointments.html" 
-    : "src/views/assistant/appointments/appointments.html",
+    : "src/views/assistant/calendar/assign.html",
     
-    "/pending": "/src/views/assistant/give/assign.html",
     "/details": "/src/views/details/details.html",
     "/users": "/src/views/admin/users.html"
 };
@@ -22,7 +21,7 @@ const loadContent = async (path) => {
     const user_data = JSON.parse(localStorage.getItem('user_details'));
 
     const user_routes = ["/", "/create_appointment", "/appointments", "/details"]
-    const assistant_routes = ["/", "/appointments", "/details", "/pending"]
+    const assistant_routes = ["/", "/appointments", "/details", "/appointments"]
     const admin_routes = ["/", "/appointments", "/users", "/details"]
     const visitor_routes = ["/", "/login", "/register", "/welcome", "/create_appointment"]
 
