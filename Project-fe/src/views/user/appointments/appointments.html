@@ -12,11 +12,30 @@
     margin-left: 5px;
     fill: #007bff;
 }
+
+.bd-placeholder-img {
+      font-size: 1.125rem;
+      text-anchor: middle;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+    }
+
+    @media (min-width: 768px) {
+      .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+      }
+    }
 </style>
 
-<div class="container mt-5">
-    <div id="accordion">
-      <div id="content"></div>
+<div class="container d-flex justify-content-center col-md-10">
+  
+  <div class="col-md-10">       
+    <h2 class="d-flex justify-content-end">Appointments</h2>
+    <div id="searchBar"></div>
+    <div id="content">
     </div>
   </div>
+</div>
 <script src="src/views/user/appointments/appointments.js" ></script>
+

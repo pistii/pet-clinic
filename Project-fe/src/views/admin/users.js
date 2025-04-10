@@ -10,14 +10,12 @@ let query = {
 }
 
 async function fetchData() {
-  await fetch(`${SERVER_URL}/api/users/getAll`, {
+  
+  await fetchWithAuth("/api/users/getAll", {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(query)
-  }).then(res => !res.ok ? showError(res) : success(res));
+    data: query
+  }, 
+).then(res => !res.ok ? showError(res) : success(res));
 }
 
 fetchData();
@@ -25,7 +23,7 @@ fetchData();
 async function filter(event) {
   event.preventDefault();
   query.search = document.getElementById("searchByField").value;
-  query.limit = document.getElementById("limitField").value;
+  query.limit = parseInt(document.getElementById("limitField").value);
   query.page = 1;
   query.offset = 0;
   
@@ -55,7 +53,7 @@ async function success(res) {
 
 async function changePage(page) {
   //Prepare data
-  query.offset = page == 1 ? query.limit - query.offset : query.limit*(page-1);
+  query.offset = Math.max(0, query.limit * (page - 1));
   query.page = page;
 
   //Scroll to top

@@ -38,12 +38,7 @@ let user_pets = [];
 //Receive all pet for user
 async function fetchData() {
     try{
-        let server_response = await fetch(`${SERVER_URL}/api/pets/getAll`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-            }
-        }) 
+        let server_response = await fetchWithAuth(`/api/pets/getAll`);
 
         let json_pet_list = await server_response.json();
         user_pets = json_pet_list;
@@ -65,11 +60,6 @@ async function postAppointmentRequest() {
     let selectedGender = document.querySelector('input[name="radio_gender"]:checked');
     let sex = selectedGender ? selectedGender.value : null;
     
-    const token = localStorage.getItem("access_token");
-
-    const header = new Headers();
-    header.append('Content-Type', 'application/json');
-
     let json_body = {
         "pet": {
             "name": pet_name,
@@ -81,29 +71,32 @@ async function postAppointmentRequest() {
         },
         "description": description
     }
-    
-
-    if (!current_role) {
-        let name = form.name.value;
-        let email = form.email.value;
-        json_body['user'] = {
-            "email": email,
-            "name": name
-        }
-
-        //console.log(json_body)
-    }
-    else {
-        header.append('Authorization', `Bearer ${token}`)
-    }
 
     let request;
     try {
-        request = await fetch(`${SERVER_URL}/api/appointment/create`, {
-            method: "POST",
-            headers: header,
-            body: JSON.stringify(json_body)
-        });
+        if (current_role) {
+            request = await fetchWithAuth(`/api/appointment/create`, {
+                method: "POST", 
+                data: json_body
+            })
+        }
+        else {
+            let name = form.name.value;
+            let email = form.email.value;
+            json_body['user'] = {
+                "email": email,
+                "name": name
+            }
+
+            
+            request = await fetch(`${SERVER_URL}/api/appointment/create`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(json_body)
+            });
+        }
     }
     catch (error) {
         showErrorMsg(error);

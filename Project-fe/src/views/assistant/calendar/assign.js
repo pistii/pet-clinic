@@ -17,13 +17,13 @@ let data = [];
     let calendarEl = document.getElementById('calendar');
 
     //Load appointments before a week
-    let obj = {
-        "startDate": datePickerFormat(new Date()),
-        "endDate": datePickerFormat(new Date(new Date().setDate(new Date().getDate() + 7))),
-        "includePending": true
-    };
+    // let obj = {
+    //     "startDate": datePickerFormat(new Date()),
+    //     "endDate": datePickerFormat(new Date(new Date().setDate(new Date().getDate() + 7))),
+    //     "includePending": true
+    // };
     
-    await fetchAppointments(obj);
+    //await fetchAppointments(obj);
 
     let calendar = new Calendar(calendarEl, {
         plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
@@ -174,45 +174,40 @@ function openAssignModal(info) {
 ///////////////////// Server communication
 
 async function fetchAppointments(json_data) {
-    const response = await fetch(`${SERVER_URL}/api/appointment/assistant`, 
+    const response = await fetchWithAuth(`/api/appointment/assistant`, 
         {
         method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify(json_data)
+        data: json_data
     });
+
     const data = await response.json();
     return data;
 }
 
 async function assignAppointment(start) {
-    console.log("click")
+    const btn = document.getElementById("assignBtn");
+    showLoader(true, btn);
     const activeTab = document.querySelector(".tab-pane.show.active");
     const appointmentId = activeTab?.id.replace("apt-", ""); // "apt-<id>"
 
     let time = formatDate(start);
     let formattedTime = time.replace("<br>", "T")
-    console.log("Kiválasztott tab ID:", appointmentId);
-    console.log("idopont: " + formattedTime)
+    
     let data = { 
         id: appointmentId, 
         time_of_appointment: formattedTime
     }
     
-    const response = await fetch(SERVER_URL + '/api/appointment/assistant/update', {
+    const response = await fetchWithAuth('/api/appointment/assistant/update', {
         method: "PATCH",
-        body: JSON.stringify(data),
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + localStorage.getItem("access_token")
-         }
+        data: data
     });
 
+    showLoader(false, btn);
     if (response.ok) {
         window.location.reload();
     }
+    
 }
 
 async function removeAppointmentTime(appointmentId) {
@@ -221,48 +216,44 @@ async function removeAppointmentTime(appointmentId) {
         time_of_appointment: null,
         status: "Pending..."
     }
-    console.log(data)
 
-    const response = await fetch(SERVER_URL + '/api/appointment/assistant/update', {
+    const btn = document.getElementById("remove_appointment");
+    showLoader(true, btn);
+    const response = await fetchWithAuth('/api/appointment/assistant/update', {
         method: "PATCH",
-        body: JSON.stringify(data),
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + localStorage.getItem("access_token")
-         }
+        data: data
     });
-
+    showLoader(false, btn);
     if (response.ok) {
-        const resp = await response.json();
+        //const resp = await response.json();
         window.location.reload();
     }
 }
 
-async function updateAppointment(initialForm) {
-    console.log(JSON.stringify(initialForm))
-/*
-    {"owner_name":"Gipsz1",
-    "email":"user5@petclinic.com",
-    "pet_name":"aaaaaa",
-    "pet_species":"",
-    "pet_breed":"",
-    "pet_dob":null,
-    "radio_gender":null,
-    "description":"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    "id":"67e43baa70a285ed951ad3cd"}
-*/
-    // const response = await fetch(SERVER_URL + '/api/appointment/assistant/update', {
-    //     method: "PATCH",
-    //     body: JSON.stringify(data),
-    //     headers: { 
-    //         "Content-Type": "application/json",
-    //         "Authorization": "Bearer " + localStorage.getItem("access_token")
-    //      }
-    // });
-
-    // if (response.ok) {
-    //     const resp = await response.json();
-    //     window.location.reload();
-    // }
-}
 ///////////////////// End Of server communication
+
+
+///////////////////// Frontend functions
+
+function showLoader(show, item) {
+    if (show) {
+        item.disabled = true;
+        item.innerHTML =
+        `<div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>`
+    }
+    else {
+        item.disabled = false;
+        item.innerHTML =
+        `<div class="d-flex justify-content-center">
+            <div>
+                <span>Send</span>
+            </div>
+        </div>`
+    }
+}
+
+/////////////////////

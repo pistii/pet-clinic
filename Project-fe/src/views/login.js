@@ -12,9 +12,7 @@ async function loginBtnPress(event) {
     let isSuccess = await login(email, password);
     
     if(isSuccess) {
-        //get the user details with the access token
-        let token = localStorage.getItem("access_token") 
-        await getUserData(token);
+        await getUserData();
         window.location.href = '/appointments';
     }
 }
@@ -52,16 +50,10 @@ async function login(email, password) {
     }
 } 
 
-async function getUserData(access_token) {
+async function getUserData() {
     let json_resp = null;
     try {
-        const response = await fetch(`${SERVER_URL}/api/users/getUser`, {
-            method: "GET",
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${access_token}`
-            }
-        });
+        const response = await fetchWithAuth(`/api/users/getUser`);
     
         json_resp = await response.json();
     }

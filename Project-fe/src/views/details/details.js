@@ -28,14 +28,7 @@ function setWatcher() {
 
 async function fetchUser() {
 
-    let token = localStorage.getItem("access_token");
-    let response = await fetch(`${SERVER_URL}/api/users/getUser`, {
-        method: 'GET',
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        }
-    });
+    let response = await fetchWithAuth(`/api/users/getUser`);
 
     let resp_json = await response.json();
     return resp_json;
@@ -59,14 +52,9 @@ async function update() {
         json_obj["password"] = password
     }
 
-    let token = localStorage.getItem("access_token");
-    let response = await fetch(`${SERVER_URL}/api/users/update`, {
+    let response = await fetchWithAuth(`/api/users/update`, {
         method: 'PUT',
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(json_obj)
+        data: json_obj
     });
 
     if (response.ok) {
@@ -77,15 +65,10 @@ async function update() {
 }
 
 async function deleteUser() {
-    let token = localStorage.getItem("access_token");
     let user_id = initial_data.id;
     
-    let response = await fetch(`${SERVER_URL}/api/users/delete/${user_id}`, {
-        method: 'DELETE',
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        }
+    let response = await fetchWithAuth(`/api/users/delete/${user_id}`, {
+        method: 'DELETE'
     });
 
     if (response){
@@ -133,8 +116,7 @@ async function validate(e) {
     // console.log("email" + email !== initial_data.email + "|" + email)
     // console.log("name" + name !== initial_data.name + "|" + name)
 
-
-    if (passwordIsValid && (email !== initial_data.email || name !== initial_data.name)) {
+    if (passwordIsValid || (email !== initial_data.email || name !== initial_data.name)) {
         //Validation was successful proceed to data sending.
         let resp = await update();
 
