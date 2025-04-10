@@ -62,8 +62,8 @@ async def update_appointment(
     appointment: AssistantConfirmsAppointmentUpdate,
     _ : Annotated[bool, Depends(RoleChecker(required_role=["assistant", "admin"]))],
     ):
-    existing_appointment = await AppointmentRepository.get_by_id(appointment.id)
-
+    appointment_dict = await AppointmentRepository.get_by_id(appointment.id)
+    existing_appointment = Appointment(**appointment_dict)
     if not existing_appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
@@ -72,7 +72,7 @@ async def update_appointment(
         print("user is not registered, should send email...")
 
     try:
-        is_updated = await AppointmentRepository.update_appointment(appointment)
+        is_updated = await AppointmentRepository.update_appointment(appointment_dict["_id"], appointment)
         if is_updated is True:
             return JSONResponse(content="Update successful.", status_code=200)
         else:
