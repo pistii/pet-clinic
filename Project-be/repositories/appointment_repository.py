@@ -28,7 +28,7 @@ class AppointmentRepository:
         try:
             result = await appointment_collection.find_one({"_id": ObjectId(id)})
             if result:
-                return Appointment(**result)
+                return result
         except pymongo.errors.PyMongoError:
             print(f"Appointment not found: {result}")
     
@@ -253,27 +253,20 @@ class AppointmentRepository:
 
 
     @staticmethod
-    async def update_appointment(appointment: AssistantConfirmsAppointmentUpdate):
-        print("appointment in update:")
-        print(appointment)
-
-        
+    async def update_appointment(appointment_id: str, appointment: AssistantConfirmsAppointmentUpdate):
         converted = convert_object_ids(appointment)
 
         # Csak a nem None értékeket tartalmazó dictionary
         update_data = converted.model_dump(exclude_none=True)
-        if appointment.time_of_appointment == None: #Visszaállítjuk null-ra
-           update_data["time_of_appointment"] = None 
-        update_data.pop("id", None)
-
-        
-        print(update_data)  # Debugginghez, hogy lássuk, mit frissít
+        if appointment.time_of_appointment == None: #Visszaállítjuk null-ra, így az asszisztens újra megkapja mint függő időpont
+           update_data["time_of_appointment"] = None
+           update_data["status"] = "Pending..."
         
         if not update_data:
             return None  # Ha nincs mit updatelni, akkor nem csinálunk semmit
 
         result = await appointment_collection.update_one(
-            {"_id": ObjectId(appointment.id)},  # Keresési feltétel
+            {"_id": ObjectId(appointment_id)},  # Keresési feltétel
             {"$set": update_data},  # Csak a ténylegesen megadott mezőket frissíti
         )
         if result.modified_count == 1:

@@ -87,35 +87,33 @@ async def update_appointment(
     user: User = Depends(get_current_user)
     ):
     
-    existing_appointment = await AppointmentRepository.get_by_id(appointment.id)
-    copy=existing_appointment
+    existing_dict = await AppointmentRepository.get_by_id(appointment.id)
+    existing_appointment = Appointment(**existing_dict)
 
     if not existing_appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
     
     if user.role == "assistant" or user.role=="admin":
-        copy["status"] = "Appointment received."
-        copy["time_of_appointment"] = appointment.time_of_appointment
-        if not copy["user_is_registered"]:
+        existing_appointment.status = "Appointment received."
+        existing_appointment.time_of_appointment = appointment.time_of_appointment
+        if not existing_appointment.user_is_registered:
             #TODO send email to user if anonim
             print("user is not registered, should send email...")
 
     elif user.role == "user": #User módosította az időpontot
-        existing_appointment["status"] = "Pending..."
-        existing_appointment["modified_by"] = user.name
-        existing_appointment["last_modification"] = datetime.now()
-        existing_appointment["time_of_appointment"] = None
-        existing_appointment["description"] = appointment.description
+        existing_appointment.status = "Pending..."
+        existing_appointment.modified_by = user.name
+        existing_appointment.last_modification = datetime.now()
+        existing_appointment.time_of_appointment = None
+        existing_appointment.description = appointment.description
         #TODO: Újra értesíteni kell az assistantot
     
-    obj = json.loads(json.dumps(convert_document(existing_appointment)))
-
-    is_updated = await AppointmentRepository.update_appointment(copy)
+    is_updated = await AppointmentRepository.update_appointment(existing_dict["_id"], existing_appointment)
     if is_updated is None:
         return JSONResponse(content="No changes.", status_code=200)
     if isinstance(is_updated, dict):
         return JSONResponse(content="Appointment updated.", status_code=201)
-    raise HTTPException("Error while updating appointment.", status_code=400)
+    raise HTTPException(detail="Error while updating appointment.", status_code=400)
 
 
 @router.post("/create")
