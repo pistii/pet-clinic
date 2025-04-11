@@ -47,3 +47,11 @@ class UnregisteredUserForm(BaseModel):
     role: Optional[str] = Field("anonim")
     is_active: bool = Field(False)
     pets: List[PetCreate] = Field([])
+
+
+class ForgotPassword(BaseModel):
+    email: str = Field(...)
+
+class PasswordReset(BaseModel):
+    password: str = Field(...)
+    token: str = Field(...)

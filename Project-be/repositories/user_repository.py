@@ -2,9 +2,10 @@ import json
 import math
 import os
 from typing import Union
+import uuid
 from bson import ObjectId
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -17,10 +18,14 @@ from utils.converter import convert_document
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
+RESET_TOKEN_EXPIRES_MINUTES = 15
 
 client_motor = AsyncIOMotorClient(MONGO_URI)
 db = client_motor.get_database("pet_clinic")
 users_collection = db.get_collection("users")
+
+reset_token_collection = db.get_collection("reset_tokens")
+reset_token_collection.create_index("expires_at", expireAfterSeconds=900)
 
 
 class UserRepository:
@@ -149,3 +154,57 @@ class UserRepository:
         if result.deleted_count == 1:
             return True
         return False
+      
+    @staticmethod
+    async def upgrade_anonim_user_to_registered(user_data: UserCreate):
+        result = await users_collection.update_one(
+            {"email": user_data.email, "role": "anonim"},
+            {
+                "$set": {
+                    "name": user_data.name,
+                    "password": Hasher.hashPassword(user_data.password),
+                    "role": "user",
+                    "is_active": True,
+                    "registration_date": datetime.now()
+                }
+            }
+        )
+        return True
+
+        
+
+    async def generate_password_reset_token(email: str):
+        token = str(uuid.uuid4())
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_EXPIRES_MINUTES)
+
+        token_data = {
+            "token": token,
+            "email": email,
+            "expires_at": expires_at,
+            "used": False
+        }
+
+        await reset_token_collection.insert_one(token_data)
+
+        return token
+
+
+    async def verify_reset_token(token: str):
+        token_data = await db.get_collection("reset_tokens").find_one({"token": token})
+
+        if not token_data or token_data["used"]:
+            raise HTTPException(status_code=400, detail="Invalid or used token")
+
+        expires_at = token_data["expires_at"]
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        if expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Token expired")
+
+        return token_data["email"]
+
+
+    async def invalidate_reset_token(token: str):
+        await db.get_collection("reset_tokens").find_one_and_update(
+            {"token": token}, {"$set": {"used": True}})

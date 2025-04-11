@@ -2,6 +2,9 @@ console.log(user_role)
 
 const routes = {
     "/": "src/views/welcome.html",
+    "/password-reset": "/src/views/password_reset/password_reset.html",
+    "/forgot-password": "src/views/forgot_password/forgot_password.html",
+
     "/login": "src/views/login.html",
     "/register": "src/views/register.html",
     "/create_appointment": "src/views/user/create_appointment/create_appointment.html",
@@ -23,7 +26,8 @@ const loadContent = async (path) => {
     const user_routes = ["/", "/create_appointment", "/appointments", "/details"]
     const assistant_routes = ["/", "/appointments", "/details", "/appointments"]
     const admin_routes = ["/", "/appointments", "/users", "/details"]
-    const visitor_routes = ["/", "/login", "/register", "/welcome", "/create_appointment"]
+    const visitor_routes = ["/", "/login", "/register", "/welcome", "/create_appointment", 
+        "/forgot-password", "/password-reset"]
 
 
     if (routes[path]) {
@@ -72,6 +76,10 @@ const loadContent = async (path) => {
             console.error(error)
             contentDiv.innerHTML = "<p>404 Hiba történt a tartalom betöltésekor.</p>";
         }
+    }
+    else if (path.startsWith("/password-reset") && !user_data) {
+        // Do nothing just catch these paths
+        loadPage(routes["/password-reset"])
     }
     else {
         contentDiv.innerHTML = "<p>404 Page not found.</p>";

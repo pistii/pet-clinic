@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from models.helpers.queryparams import QueryParams
-from models.User import UpdateUser, User, UserResponse, UserCreate
+from models.User import ForgotPassword, PasswordReset, UpdateUser, User, UserResponse, UserCreate
 from models.token import Token
 
 from repositories.token import add_refresh_token, update_refresh_token
@@ -16,6 +16,7 @@ from auth.auth import authenticate_user, create_token, create_token_pair, get_cu
 from auth.RoleChecker import RoleChecker
 
 from utils.converter import convert_object_ids
+from services.email import EmailSendingService
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
@@ -23,13 +24,24 @@ router = APIRouter(prefix="/api/users", tags=["Users"])
 @router.post("/register", response_model=UserResponse)
 async def create_user(user: UserCreate):
     existing_user = await UserRepository.get_user_by_email(user.email)
-    if existing_user:
+    if existing_user and existing_user["is_active"]:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
+    #User requested appointment as anonim user
+    elif existing_user and not existing_user["is_active"]:
+        is_updated = await UserRepository.upgrade_anonim_user_to_registered(user)
+        if not is_updated:
+            raise HTTPException(status_code=400, detail="Failed to create user")
+        
+        user_dict = user.model_dump(exclude="password")
+        return UserResponse(id=str(existing_user["_id"]), **user_dict)
+    
+    #User doesn't requested appointment before and now wish to create a new account
+    else:
+        user_id = await UserRepository.create_user(user)
+        user_dict = user.model_dump(exclude="password")
+        return UserResponse(id=user_id, **user_dict)
 
-    user_id = await UserRepository.create_user(user)
-    user_dict = user.model_dump(exclude="password")
-
-    return UserResponse(id=user_id, **user_dict)
 
 #Registers assistant if email is not used
 @router.post("/register/assistant", response_model=UserResponse)
@@ -157,3 +169,35 @@ async def delete_user(id: str,
             raise HTTPException(status_code=400, detail="Failed to delete user.")
     
     raise HTTPException(status_code=403, detail="Forbidden")
+
+@router.post("/forgot-password")
+async def forgot_password(forgot_password: ForgotPassword):
+    user_exist = await UserRepository.get_user_by_email(forgot_password.email)
+    if user_exist is None: 
+        raise HTTPException(status_code=404, detail="User not found")
+    if isinstance(user_exist, dict):
+        raise HTTPException(detail="You are not registered yet.", status_code=400)
+    elif isinstance(user_exist, User) and not user_exist.is_active: 
+        raise HTTPException(status_code=400, detail="Your account is not activated")
+        
+    token = await UserRepository.generate_password_reset_token(user_exist.email)
+    if (token):
+        WEBSERVER_URL = f"http://localhost:5173/password-reset/{token}"
+        EmailSendingService.sendMail(user_exist.email, "Password reset", f"Link: {WEBSERVER_URL}. \
+                                    Please be aware this link will be expire in 15 minutes.")
+        return JSONResponse(status_code=200, content=None)
+    raise HTTPException(status_code=400, detail="Failed to generate token.")
+
+@router.post("/verify-token")
+async def verify_token(password_reset: PasswordReset):
+    is_valid = await UserRepository.verify_reset_token(password_reset.token)
+    if (is_valid):
+        user = await UserRepository.get_user_by_email(is_valid)
+        update_user = UpdateUser(password=password_reset.password, 
+                                 email=user.email, 
+                                 id=user.id, 
+                                 name=user.name)
+        await UserRepository.update_user(update_user)
+        await UserRepository.invalidate_reset_token(password_reset.token)
+        return JSONResponse(status_code=200, content="Password changed.")
+    raise HTTPException(status_code=400, detail="Token is invalid")
