@@ -40,7 +40,7 @@ class UserRepository:
         total_document = await users_collection.count_documents(query)
         total_pages = math.ceil(total_document/queryParams.limit)
 
-        users = await users_collection.find(query).limit(queryParams.limit).skip(queryParams.offset).to_list()
+        users = await users_collection.find(query, {"password": 0}).limit(queryParams.limit).skip(queryParams.offset).to_list()
         converted = convert_document(users)
         return converted, total_pages
 
@@ -100,7 +100,7 @@ class UserRepository:
             "email": user.email,
             "password": Hasher.hashPassword(user.password),
             "role": "admin",
-            "registration_date": datetime.now(datetime.timezone.utc),
+            "registration_date": datetime.now(timezone.utc),
             "last_login": None,
             "is_active": True,
             "pets": []

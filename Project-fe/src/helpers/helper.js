@@ -26,10 +26,15 @@ export function datePickerFormat(date_param) {
 
 export function bindFormData(formId, data) {
     const form = document.getElementById(formId);
-    
+    delete data.id; //Vagy ez kell
     Object.keys(data).forEach(key => {
-        if (form[key]) {
-            form[key].value = data[key];
+        try {
+            if (form[key]) { // Vagy ez: && form[key] !== "assignForm"            
+                form[key].value = data[key];
+            }
+        }
+        catch (error) {
+            console.log(error)
         }
     });
 }

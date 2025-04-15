@@ -1,11 +1,7 @@
+import { formatDate } from "../../../helpers/helper"
 export const renderBookedAppointmentModal = () => {
     document.getElementById("modalContent").innerHTML = 
     `
-<div>
-    <button class="btn btn-secondary" href="#medicalHistory">Medical history</button>
-    <button class="btn btn-secondary" href="#assignForm">Details</button>
-    <button class="btn btn-secondary" href="#diagnosisForm">Diagnosis</button>
-</div>
 <form id="assignForm">
 
     <div>
@@ -14,8 +10,8 @@ export const renderBookedAppointmentModal = () => {
     </div>
 
     <div class="mb-3">
-        <label for="appointment_time" class="form-label">Time Of Appointment:</label>
         <div>
+            <span class="form-label">Time Of Appointment:</span>
             <strong class="text-primary" id="time_of_appointment"></strong>
             <button type="button" class="mr-3 btn btn-secondary" id="remove_appointment">Remove</button>
         </div>
@@ -148,3 +144,80 @@ export const renderAvailableAppointmentModal = (users, selectedTime) => {
     </div>
     `;
 }
+
+export function renderMedicalHistory(dataList) {
+        const container = document.getElementById("modalContent");
+        container.innerHTML = ""; // Törlés
+    
+        if (!dataList || dataList.length === 0) {
+            container.innerHTML = "<p class='text-muted'>No previous records.</p>";
+            return;
+        }
+    
+        dataList.forEach(entry => {
+            const date = formatDate(entry.time_of_appointment);
+            const pet = entry.pet || {};
+    
+            const html = `
+                <div class="p-3 border-bottom border-primary-subtle">
+                    <h5 class="mb-2 text-primary">${date}</h5>
+    
+                    <div class="mb-2">
+                        <strong>Pet name:</strong> ${pet.name || "-"}<br>
+                        <strong>Specie:</strong> ${pet.species || "-"}<br>
+                        <strong>Breed:</strong> ${pet.breed || "-"}
+                    </div>
+    
+                    <div class="mb-2">
+                        <strong>Description:</strong><br>
+                        ${entry.description ? entry.description : "<em>Not set</em>"}
+                    </div>
+    
+                    <div class="mb-1">
+                        <strong>Diagnosis:</strong><br>
+                        ${entry.diagnosis ? entry.diagnosis : "<em>No diagnosis</em>"}
+                    </div>
+                </div>
+            `;
+    
+            container.insertAdjacentHTML("beforeend", html);
+        });
+    }
+
+
+export function renderDiagnosisView(appointment) {
+        const container = document.getElementById("modalContent");
+        container.innerHTML = "";
+        console.log(appointment)
+
+        const ownerName = appointment?.owner.name || "Tulajdonos neve nem elérhető";
+        const petName = appointment?.owner.pet?.name || "Állat neve nem elérhető";
+        const diagnosisText = appointment?.diagnosis || "";
+    
+        const html = `
+            <div class="mb-3">
+                <h5 class="mb-1"><strong>Tulajdonos:</strong> ${ownerName}</h5>
+                <h6 class="text-muted"><strong>Állat neve:</strong> ${petName}</h6>
+            </div>
+    
+            <div class="mb-4">
+                <label for="diagnosisTextarea" class="form-label"><strong>Diagnózis</strong></label>
+                <textarea class="form-control" id="diagnosisTextarea" rows="8">${diagnosisText}</textarea>
+            </div>
+    
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-success" id="saveDiagnosisBtn">
+                    <i class="bi bi-check-circle me-1"></i> Mentés
+                </button>
+            </div>
+        `;
+    
+        container.innerHTML = html;
+    
+        document.getElementById("saveDiagnosisBtn").addEventListener("click", () => {
+            const newDiagnosis = document.getElementById("diagnosisTextarea").value;
+            saveDiagnosis(appointment.id, newDiagnosis);
+            
+        });
+    }
+    

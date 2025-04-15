@@ -3,27 +3,22 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import { bindFormData, datePickerFormat, formatDate } from '../../../helpers/helper';
-import { renderBookedAppointmentModal, renderAvailableAppointmentModal } from './templates';
+import { renderBookedAppointmentModal, renderAvailableAppointmentModal, renderMedicalHistory, renderDiagnosisView } from './templates';
 
 let events = [];
 let data = [];
+
+let currentForm = null;
+let currentAppointment = null;
 
 // For more interaction and resizable appointments, consider using draggable elements:
 // https://fullcalendar.io/docs/event-dragging-resizing
 // Demo: https://fullcalendar.io/docs/external-dragging-demo
 // Dragging: https://fullcalendar.io/docs/external-dragging
 
-(async function initCalendar() {
+////////////////// Calendar initialization
+(async function initCalendar() {    
     let calendarEl = document.getElementById('calendar');
-
-    //Load appointments before a week
-    // let obj = {
-    //     "startDate": datePickerFormat(new Date()),
-    //     "endDate": datePickerFormat(new Date(new Date().setDate(new Date().getDate() + 7))),
-    //     "includePending": true
-    // };
-    
-    //await fetchAppointments(obj);
 
     let calendar = new Calendar(calendarEl, {
         plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
@@ -108,11 +103,11 @@ function generateTimeSlots(startDay = new Date(), totalDays = 7, startHour = 6, 
     return slots;
 }
 
-
+//////////////// End of calendar initialization
 
 function openAssignModal(info) {
     let modal = new bootstrap.Modal(document.getElementById("assignModal"));
-
+    
     if (info.event.title == "Szabad időpont") {        
         //IMPORTANT: The displayed date and actual date can differ in different timezones.
         let start = new Date(info.event._instance.range.start);
@@ -142,10 +137,12 @@ function openAssignModal(info) {
         document.getElementById("assignBtn").addEventListener("click", () => assignAppointment(correctedStart))
     } 
     else {
+        
         renderBookedAppointmentModal();
 
         let apt = info.event._def.extendedProps;
-        let form = {
+        currentForm = {
+            id: apt._id,
             owner_name: apt.owner.name,
             email: apt.owner.email,
             pet_name: apt.owner.pet.name,
@@ -155,18 +152,17 @@ function openAssignModal(info) {
             radio_gender: apt.owner.pet.sex,
             description: apt.description
         }
-        //console.log(apt)
-        if (apt) {
-            bindFormData("assignForm", form);
-            document.getElementById("modalTitle").innerText = "Booked Appointment"
-            document.getElementById("time_of_appointment").innerText = formatDate(apt.time_of_appointment).replace("<br>", " ");
-            document.getElementById("remove_appointment").addEventListener("click", () => {removeAppointmentTime(apt._id)})
-        }
 
-        form["id"] = apt._id
-        document.getElementById("updateAppointmentBtn").addEventListener("click", () => updateAppointment(form))
+        
+        currentAppointment = apt;
+        bindFormData("assignForm", currentForm);
+        document.getElementById("modalTitle").innerText = "Booked Appointment"
+        document.getElementById("time_of_appointment").innerText = formatDate(currentAppointment.time_of_appointment).replace("<br>", " ");
+        document.getElementById("remove_appointment").addEventListener("click", () => {removeAppointmentTime(currentAppointment._id)})
+        document.getElementById("updateAppointmentBtn").addEventListener("click", () => updateAppointment(currentAppointment))
     }
 
+    setNavigationBtnWatchers();
     modal.show();
 }
 
@@ -230,10 +226,45 @@ async function removeAppointmentTime(appointmentId) {
     }
 }
 
+async function getMedicalHistory(userId) {
+    let data = await fetchWithAuth(`/api/appointment/getAll/medical-history/${userId}`);
+    let json_result = await data.json();
+    return json_result;
+}
 ///////////////////// End Of server communication
 
 
 ///////////////////// Frontend functions
+
+/// Watcher for view change
+function setNavigationBtnWatchers() {
+    console.log(currentAppointment)
+    isClickedOnElement("medicalHistoryView", () => getAndRenderMedicalHistory())
+    isClickedOnElement("detailsView", () => renderBookedAppointmentModalAndSetData());
+    isClickedOnElement("diagnosisView", () => renderDiagnosisView(currentAppointment))
+}
+
+async function getAndRenderMedicalHistory() {
+    let result = await getMedicalHistory("67de8c397169f66eafbdcc1a"); //currentAppointment.owner._id
+    renderMedicalHistory(result);
+}
+
+function renderBookedAppointmentModalAndSetData() {
+    renderBookedAppointmentModal();
+    if (currentAppointment) {
+        bindFormData("assignForm", currentForm);
+        document.getElementById("modalTitle").innerText = "Booked Appointment"
+        document.getElementById("time_of_appointment").innerText = formatDate(currentAppointment.time_of_appointment).replace("<br>", " ");
+        document.getElementById("remove_appointment").addEventListener("click", () => {removeAppointmentTime(currentAppointment._id)})
+    }
+    
+    document.getElementById("updateAppointmentBtn").addEventListener("click", () => updateAppointment(currentAppointment))
+}
+
+
+function isClickedOnElement(elementName, callback) {
+    document.getElementById(elementName).addEventListener("click", callback);
+}
 
 function showLoader(show, item) {
     if (show) {
