@@ -28,6 +28,21 @@ async def get_user_appointments(user: Annotated[User, Depends(get_current_user)]
     return JSONResponse(content=[], status_code=404)
 
 
+@router.get("/getAll/medical-history/{user_id}")
+async def get_user_medical_history(user_id: str,
+                                    _ : Annotated[bool, Depends(RoleChecker(required_role=["assistant", "admin"]))]
+                                    ):
+    user_exist = await UserRepository.get_user_by_id(user_id)
+    if user_exist is None: raise HTTPException(detail="User not found", status_code=404)
+    user_exist["_id"] = str(user_exist["_id"])
+    user_found = User(**user_exist)
+
+    appointments = await AppointmentRepository.get_user_appointments(user_found)
+    if len(appointments) > 0:
+        convert_json = [convert_document(item) for item in appointments]
+        return JSONResponse(content=convert_json, status_code=200)
+    return JSONResponse(content=[], status_code=404)
+
 
 #Returns appointments in the specified date interval
 @router.post("/assistant")

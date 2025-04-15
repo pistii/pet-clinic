@@ -198,7 +198,7 @@ class AppointmentRepository:
             }
         },
         {
-            "$unset": ["owner", "user_id", "appointment_id", "pet_id", "user_info.password"]
+            "$unset": ["owner", "_id", "user_id", "appointment_id", "pet_id", "user_info.password"]
         }
         ])
 
