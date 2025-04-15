@@ -1,34 +1,24 @@
 export function renderUserData(data) {
     document.getElementById("content").innerHTML =
         `<div class="bg-dark p-5 rounded">
-          
             <div class="mx-auto text-light" name="title">
               <div name="title" class="d-flex row text-secondary font-italic">
-                <div class="col-1"></div>
+                <div class="col-1 d-flex"></div>
                 <div class="col-auto">User name</div>
-                <div class="col">User email</div>
-                <div class="col"> 
-                  <span type="button" class="dropdown-toggle dropdown-toggle-split" 
-                  data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="sr-only">Appointment time</span>
-                  </span>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="#">Request time</a>
-                    <a class="dropdown-item" href="#">Another action</a>
-                    <a class="dropdown-item" href="#">Something else here</a>
-                    <div role="separator" class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#">Separated link</a>
-                  </div>
-                  </div>
-  
-                <div class="col d-flex justify-content-end">Appointment status</div>
+                <div class="col d-flex justify-content-end">User email</div>
+                
+                <div class="col d-flex justify-content-end">Registered</div>
+
+                <div class="col d-flex justify-content-end">Role</div>
               </div>
             <div style="padding-block: 12px;"></div>
     
               <ul class="list-group list-group-flush">
                 <div  name="filter-container">
-                
-                  ${data.map(at => `<div class="col" id="appointment-time">
+
+                  ${data.map(at => 
+                    `
+                    <div class="col" id="appointment-time">
                     <li class="list-group-item bg-transparent text-light row d-flex px-0 mx-0"
                     >
                     
@@ -37,31 +27,80 @@ export function renderUserData(data) {
                       data-bs-toggle="collapse" href="#user${data.indexOf(at)}" aria-expanded="false" 
                     aria-controls="user${data.indexOf(at)}">&#9650;</div>
                     </div>
-                    <div class="col-auto">
+                    <div class="col">
                     ${at.name}
                     </div>
                     <div class="col">
                     ${at.email}
                     </div>
-                    <div class="col">
-                    
+                    <div class="col justify-content-center d-flex">
+                    ${at.is_active}
                    </div>
                     
-                  
+                    
                   <div id="status" class="col d-flex justify-content-end">
-                    <p >${at.status}</p>
+                    <p >${at.role}</p>
                   </div>
                   <div class="collapse" id="user${data.indexOf(at)}">
-                    <div class="card">
+                  
+                  <div class="container-fluid">
+                    <div class="row">
+                      <div class="col-8">
+                      
+                        <div class="input-group">
+                          <label class="form-group-prepend pr-2" for="emailField${data.indexOf(at)}">Email</label>
+                          <input class="form-control" id="emailField${data.indexOf(at)}"/>
+                        </div>
+
+
+                        <div class="input-group">
+                          <label class="form-group-prepend pr-2" for="passwordField${data.indexOf(at)}">Password</label>
+                          <input class="form-control" id="passwordField${data.indexOf(at)}"/>
+                        </div>
+                        
+                      
+                        <div class="input-group">
+                          <label class="form-group-prepend pr-2" for="roleField${data.indexOf(at)}">Role </label>
+                          <input class="form-control" id="roleField${data.indexOf(at)}"/>
+                        </div>
+                        
+                        <div>
+                          <label for="isRegisteredField${data.indexOf(at)}">Active</label>
+                          <input type="checkbox" checked="${at.is_active}" id="isRegisteredField${data.indexOf(at)}"/>
+                        </div>
+                        
+                                        <!-- user form vége -->
+                        <div class="col d-flex justify-content-end align-items-start">
+                          <button class="btn btn-primary" id="editUser${data.indexOf(at)}">Edit user info</button>
+                        </div>
+
+                      </div>
+
+                                      <!-- Jobb oldali col -->
+                      <div class="col d-flex justify-content-end align-items-start">
+                        <button class="btn btn-danger" id="deleteUser${data.indexOf(at)}">Delete</button>
+                      </div>
+
+                      
+                    </div> <!--row-->
+                  </div> <!--container-->
+                  <hr>
+
+                  ${at.pets.length>0 ? at.pets.map(pet => `
+                  ${pet.pet_id}
+                    <div class="card col-6">
                       <ul class="list-group list-group-flush">
-                        <li class="list-group-item">Pet's name: Csapszeg</li>
-                        <li class="list-group-item">Pet's specie: Szög</li>
-                        <li class="list-group-item">Pet's breed: Ütögető</li>
-                        <li class="list-group-item">Pet's birth date: Valamikor</li>
-                        <li class="list-group-item">Pet's sex: Valamilyen</li>
-                        <li class="list-group-item">Pet's breed: Fajta</li>
+                        <li class="list-group-item">Pet's name:</li>
+                        <li class="list-group-item">Pet's specie: ${pet.name}</li>
+                        <li class="list-group-item">Pet's breed: ${pet.breed}</li>
+                        <li class="list-group-item">Pet's birth date: ${pet.date_of_birth}</li>
+                        <li class="list-group-item">Pet's sex: ${pet.sex}</li>
                       </ul>
                     </div>
+                    <span class="col-auto">
+                    <button class="btn btn-danger" id="removePet">Delete pet</button>
+                    </span>
+                    `) : '<div class="col-auto justify-content-center"><div>User has no pet.</div></div>'}
                   </div>
                 </li>
                 </div>`).join("")}
@@ -71,6 +110,59 @@ export function renderUserData(data) {
           </div>
         `
 };
+
+export function renderMedicalHistory(data) {
+  document.getElementById("content").innerHTML = `
+      <div class="bg-dark p-5 rounded">
+          <div class="mx-auto text-light" name="title">
+              <div name="title" class="d-flex row text-secondary font-italic">
+                  <div class="col-1"></div>
+                  <div class="col-auto">Pet name</div>
+                  <div class="col">Request time</div>
+                  <div class="col">Appointment time</div>
+                  <div class="col d-flex justify-content-end">Status</div>
+              </div>
+              <div style="padding-block: 12px;"></div>
+              <ul class="list-group list-group-flush">
+                  <div name="filter-container">
+                      ${data.map((entry, index) => `
+                          <div class="col" id="appointment-${index}">
+                              <li class="list-group-item bg-transparent text-light row d-flex px-0 mx-0">
+                                  <div class="triangle-container col-1">
+                                      <div class="triangle" type="button" id="entry_tr${index}"
+                                          data-bs-toggle="collapse" href="#entry${index}" aria-expanded="false"
+                                          aria-controls="entry${index}">&#9650;</div>
+                                  </div>
+                                  <div class="col-auto">${entry.pet?.name || 'Unknown'}</div>
+                                  <div class="col">${new Date(entry.time_of_request).toLocaleString()}</div>
+                                  <div class="col">${new Date(entry.time_of_appointment).toLocaleString()}</div>
+                                  <div class="col d-flex justify-content-end">${entry.status}</div>
+                                  <div class="collapse" id="entry${index}">
+                                      <div class="card text-dark">
+                                          <ul class="list-group list-group-flush">
+                                              <li class="list-group-item"><strong>Species:</strong> ${entry.pet?.species || '-'}</li>
+                                              <li class="list-group-item"><strong>Breed:</strong> ${entry.pet?.breed || '-'}</li>
+                                              <li class="list-group-item"><strong>Birth date:</strong> ${entry.pet?.date_of_birth ? new Date(entry.pet.date_of_birth).toLocaleDateString() : '-'}</li>
+                                              <li class="list-group-item"><strong>Sex:</strong> ${entry.pet?.sex || '-'}</li>
+                                              <li class="list-group-item"><strong>Description:</strong> ${entry.description || '-'}</li>
+                                              <li class="list-group-item"><strong>Diagnosis:</strong> ${entry.diagnosis || '-'}</li>
+                                              ${entry.modified_by || entry.last_modification ? `
+                                                  <li class="list-group-item"><strong>Modified by:</strong> ${entry.modified_by || '-'}</li>
+                                                  <li class="list-group-item"><strong>Last modification:</strong> ${entry.last_modification ? new Date(entry.last_modification).toLocaleString() : '-'}</li>
+                                              ` : ''}
+                                          </ul>
+                                      </div>
+                                  </div>
+                              </li>
+                          </div>
+                      `).join("")}
+                  </div>
+              </ul>
+          </div>
+      </div>
+  `;
+}
+
 
 export function renderQuerySettings(query, callback) {
     document.getElementById("querySettings").innerHTML = 
